@@ -25,7 +25,9 @@
         .btn-admin { background: #1a73e8; color: white; }
         .btn-copy { background: #8e24aa; color: white; }
         .btn-sync { background: #34a853; color: white; padding: 6px 10px; font-size: 0.8rem; }
-        .btn-copy-mini { background: #8e24aa; color: white; padding: 6px 10px; font-size: 0.8rem; }
+        /* 閲覧モード用の控えめなスタイル */
+        .btn-copy-mini { background: #8e24aa; color: white; padding: 6px 10px; font-size: 0.8rem; width: auto; margin: 0; }
+        .btn-copy-mini.visitor { background: transparent; color: #999; border: 1px solid #ddd; font-weight: normal; }
         .btn-save { background: #1a73e8; color: white; }
         .btn-handover { background: #f4b400; color: #333; margin-top: 10px; padding: 10px; border: 2px solid #e67c00; }
     </style>
@@ -42,7 +44,7 @@
         <div class="status-bar">
             <div id="modeDisplay" class="mode-badge"></div>
             <div style="display:flex; gap:5px;">
-                <button onclick="copyHtmlLinkDirect()" class="btn btn-copy-mini" style="width:auto; margin:0;">🔗 リンクコピー</button>
+                <button id="miniLinkBtn" onclick="copyHtmlLinkDirect()" class="btn btn-copy-mini">🔗 リンクコピー</button>
                 <button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button>
             </div>
         </div>
@@ -78,9 +80,8 @@ function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
     const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
-    // target="_blank" と rel="noopener noreferrer" を追加
     const htmlTag = `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
-    navigator.clipboard.writeText(htmlTag).then(() => alert("「別ウインドウで開く」リンクをコピーしました！"));
+    navigator.clipboard.writeText(htmlTag).then(() => alert("リンクをコピーしました！"));
 }
 
 async function saveToCloud() {
@@ -92,7 +93,7 @@ async function saveToCloud() {
             headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
             body: JSON.stringify(state)
         });
-        alert("保存しました！");
+        alert("クラウドに保存しました！");
     } catch(e) { alert("保存に失敗しました。"); }
     btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
 }
@@ -101,7 +102,7 @@ async function handoverAdmin() {
     await saveToCloud();
     const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin";
     navigator.clipboard.writeText(`管理者を引き継ぎます：\n${adminUrl}`);
-    alert("交代リンクをコピーしました。");
+    alert("交代用リンクをコピーしました。");
 }
 
 async function loadFromCloud() {
@@ -136,6 +137,8 @@ window.onload = () => {
         } else {
             document.getElementById('admin-tools').style.display = 'none';
             document.getElementById('modeDisplay').innerText = "閲覧モード";
+            // 閲覧モードの時はボタンを控えめな色にする
+            document.getElementById('miniLinkBtn').classList.add('visitor');
         }
         renderNames(); render();
         loadFromCloud();
