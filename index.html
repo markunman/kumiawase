@@ -8,11 +8,8 @@
         :root { --court1-bg: #E3F2FD; --court1-border: #2196F3; --court2-bg: #FFF3E0; --court2-border: #FF9800; --court3-bg: #F3E5F5; --court3-border: #9C27B0; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        
-        /* フロントパネル（準備用） */
         #setup-panel { text-align: center; padding: 30px 10px; }
         .setup-card { background: #ffffff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
         #main-content { display: none; }
         .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
         .mode-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid #ccc; }
@@ -24,7 +21,6 @@
         .court-1 { background: var(--court1-bg); border-color: var(--court1-border); }
         .court-2 { background: var(--court2-bg); border-color: var(--court2-border); }
         .court-3 { background: var(--court3-bg); border-color: var(--court3-border); }
-        
         .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 15px; transition: 0.2s; text-align: center; width: 100%; margin-bottom: 10px; font-size: 1rem; }
         .btn-admin { background: #1a73e8; color: white; }
         .btn-copy { background: #8e24aa; color: white; }
@@ -33,117 +29,85 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <div id="setup-panel" style="display:none;">
         <h1 style="color:#1a73e8; margin-bottom:5px;">らんだむ・いろは</h1>
-        <p style="color:#666; font-size:0.9rem;">本日の練習準備（管理者用）</p>
-        
-        <div class="setup-card">
-            <p style="font-weight:bold; margin-bottom:15px;">① 参加者にURLを共有する</p>
-            <button onclick="copyHtmlLinkDirect()" class="btn btn-copy">🔗 本日のHTMLリンクをコピー</button>
-            <p style="font-size:0.7rem; color:#888;">※管理サイトの掲示板に貼り付けてください</p>
-        </div>
-
-        <div class="setup-card" style="border-color:#1a73e8;">
-            <p style="font-weight:bold; margin-bottom:15px;">② 対戦表を管理・更新する</p>
-            <button onclick="jumpToAdmin()" class="btn btn-admin">🚀 今日の管理画面を開く</button>
-            <p style="font-size:0.7rem; color:#888;">※名前の入力や試合のチェックはこちら</p>
-        </div>
+        <div class="setup-card"><button onclick="copyHtmlLinkDirect()" class="btn btn-copy">🔗 本日のHTMLリンクをコピー</button></div>
+        <div class="setup-card" style="border-color:#1a73e8;"><button onclick="jumpToAdmin()" class="btn btn-admin">🚀 今日の管理画面を開く</button></div>
     </div>
-
     <div id="main-content">
-        <div class="status-bar">
-            <div id="modeDisplay" class="mode-badge"></div>
-            <button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button>
-        </div>
-
-        <div id="admin-tools" class="setting-box" style="display:none;">
+        <div class="status-bar"><div id="modeDisplay" class="mode-badge"></div><button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button></div>
+        <div id="admin-tools" class="setting-box">
             <div style="display:flex; justify-content: space-between; align-items: center;">
-                <div>人数: <b id="pCount" style="font-size: 1.2rem;">8</b>人</div>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="changeP(-1)" style="width:30px;">-</button>
-                    <button onclick="changeP(1)" style="width:30px;">+</button>
-                </div>
-                <select id="courtSel" onchange="changeC(this.value)">
-                    <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
-                </select>
+                <div>人数: <b id="pCount">8</b>人</div>
+                <div style="display:flex; gap:5px;"><button onclick="changeP(-1)">-</button><button onclick="changeP(1)">+</button></div>
+                <select id="courtSel" onchange="changeC(this.value)"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select>
             </div>
             <div id="nameGrid" class="name-grid"></div>
             <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
         </div>
-
         <div id="matchBoard"></div>
     </div>
 </div>
 
 <script>
-// 設定済みIDとKEY
+// 設定済み（スペース除去済み）
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
 const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
 
-let state = { p: 8, courts: 3, done: [], names: Array(31).fill(''), locked: true };
+let state = { p: 14, courts: 3, done: [], names: Array(31).fill(''), locked: true };
 
-const getTodayStr = () => {
-    const d = new Date();
-    return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2);
-};
-
-function jumpToAdmin() {
-    window.location.search = "?d=" + getTodayStr() + "&mode=admin";
-}
-
+const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
+function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode=admin"; }
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
     const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
-    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8; padding-bottom:5px;">👉 本日のゲーム練習組み合わせ</a>`;
-    navigator.clipboard.writeText(htmlTag).then(() => alert("本日のリンクをコピーしました！\n管理サイトに貼り付けてください。"));
+    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
+    navigator.clipboard.writeText(htmlTag).then(() => alert("コピーしました！"));
 }
 
 window.onload = () => {
     const params = new URLSearchParams(window.location.search);
     const urlDate = params.get('d');
-    const mode = params.get('mode');
-    const today = getTodayStr();
-
-    if (urlDate === today) {
+    if (urlDate === getTodayStr()) {
         document.getElementById('main-content').style.display = 'block';
-        if (mode === 'admin') {
+        if (params.get('mode') === 'admin') {
             state.locked = false;
-            document.getElementById('admin-tools').style.display = 'block';
             document.getElementById('modeDisplay').innerText = "管理者モード";
-            document.getElementById('modeDisplay').style.color = "#1a73e8";
         } else {
+            document.getElementById('admin-tools').style.display = 'none';
             document.getElementById('modeDisplay').innerText = "閲覧モード";
         }
         loadFromCloud();
-    } else {
-        document.getElementById('setup-panel').style.display = 'block';
-    }
+    } else { document.getElementById('setup-panel').style.display = 'block'; }
 };
 
 async function saveToCloud() {
     const btn = document.getElementById('saveBtn');
     btn.disabled = true; btn.innerText = "保存中...";
     try {
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
             body: JSON.stringify(state)
         });
+        if(!res.ok) throw new Error();
         alert("クラウドに保存しました！");
-    } catch(e) { alert("失敗しました。"); }
+    } catch(e) { alert("保存に失敗しました。Master Keyが正しいか確認してください。"); }
     btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
 }
 
 async function loadFromCloud() {
     try {
         const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' }
+            headers: { 'X-Master-Key': MASTER_KEY.trim(), 'X-Bin-Meta': 'false' }
         });
-        state = await res.json();
+        if(res.ok) {
+            const data = await res.json();
+            state = {...state, ...data};
+        }
         renderNames(); render();
-    } catch(e) { console.error("読み込み失敗"); }
+    } catch(e) { renderNames(); render(); }
 }
 
 function changeP(n) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); }
@@ -160,17 +124,39 @@ function renderNames() {
     }
 }
 
-const PAIRINGS = { 4: ["1,2 v 3,4", "1,3 v 2,4", "1,4 v 2,3"], 5: ["1,2 v 4,5", "1,3 v 2,4", "1,4 v 3,5", "1,5 v 2,3", "2,5 v 3,4", "2,4 v 3,5"], 6: ["1,2 v 4,5", "1,3 v 2,6", "3,5 v 4,6", "1,4 v 5,6", "1,6 v 2,3", "2,5 v 3,4"], 7: ["1,2 v 3,4", "1,5 v 6,7", "2,6 v 4,7", "2,3 v 5,7", "1,3 v 4,6", "3,7 v 5,6"], 8: ["1,2 v 3,4 / 5,6 v 7,8", "2,4 v 6,8 / 1,3 v 5,7", "1,5 v 2,6 / 3,7 v 4,8", "2,5 v 4,7 / 1,6 v 3,8", "1,4 v 3,6 / 2,7 v 5,8"], 9: ["1,2 v 4,5 / 6,7 v 8,9", "3,4 v 5,7 / 1,8 v 2,9", "1,5 v 7,8 / 2,4 v 3,6", "3,5 v 4,9 / 1,7 v 2,6", "2,8 v 5,9 / 4,6 v 1,3"], 10: ["1,4 v 2,9 / 3,5 v 8,10", "2,4 v 5,10 / 1,6 v 7,8", "1,8 v 7,10 / 2,3 v 6,9", "4,9 v 6,8 / 2,5 v 3,7", "1,9 v 5,8 / 3,10 v 4,7"], 11: ["1,2 v 3,4 / 5,6 v 9,11", "7,8 v 9,10 / 3,5 v 4,6", "1,7 v 6,8 / 2,9 v 10,11", "4,11 v 7,10 / 1,3 v 2,5", "5,8 v 6,9 / 3,11 v 1,4"], 12: ["1,7 v 3,9 / 2,4 v 5,6 / 8,10 v 11,12", "6,8 v 9,10 / 1,12 v 4,11 / 2,5 v 3,7", "2,3 v 8,9 / 4,7 v 10,11 / 1,6 v 5,12", "1,3 v 6,11 / 2,12 v 7,9 / 4,5 v 8,10"], 13: ["1,13 v 2,12 / 3,11 v 4,10 / 5,9 v 6,8", "1,12 v 3,13 / 2,11 v 5,10 / 4,9 v 7,8", "1,11 v 4,12 / 2,10 v 6,13 / 3,9 v 5,8"], 14: ["1,14 v 2,13 / 3,12 v 4,11 / 5,10 v 6,9", "1,13 v 3,14 / 2,12 v 5,11 / 4,10 v 7,14", "1,12 v 4,13 / 2,11 v 6,14 / 3,10 v 5,9"], 15: ["1,15 v 2,14 / 3,13 v 4,12 / 5,11 v 6,10", "1,14 v 3,15 / 2,13 v 5,12 / 4,11 v 7,10", "1,13 v 4,14 / 2,12 v 6,15 / 3,12 v 5,11"], 16: ["1,16 v 2,15 / 3,14 v 4,13 / 5,12 v 6,11", "1,15 v 3,16 / 2,14 v 5,13 / 4,12 v 7,11", "1,14 v 4,15 / 2,13 v 6,16 / 3,12 v 7,10"], 17: ["1,17 v 2,16 / 3,15 v 4,14 / 5,13 v 6,12", "1,16 v 3,17 / 2,15 v 5,14 / 4,13 v 7,12"], 18: ["1,18 v 2,17 / 3,16 v 4,15 / 5,14 v 6,13", "1,17 v 3,18 / 2,16 v 5,15 / 4,14 v 7,13"], 19: ["1,19 v 2,18 / 3,17 v 4,16 / 5,15 v 6,14", "1,18 v 3,19 / 2,17 v 5,16 / 4,15 v 7,14"], 20: ["1,20 v 2,19 / 3,18 v 4,17 / 5,16 v 6,15", "1,19 v 3,20 / 2,18 v 5,17 / 4,16 v 7,15"], 21: ["1,21 v 2,20 / 3,19 v 4,18 / 5,17 v 6,16", "1,20 v 3,21 / 2,19 v 5,18 / 4,17 v 7,16"], 22: ["1,22 v 2,21 / 3,20 v 4,19 / 5,18 v 6,17", "1,21 v 3,22 / 2,20 v 5,19 / 4,18 v 7,17"], 23: ["1,23 v 2,22 / 3,21 v 4,20 / 5,19 v 6,18", "1,22 v 3,23 / 2,21 v 5,20 / 4,19 v 7,18"], 24: ["1,24 v 2,23 / 3,22 v 4,21 / 5,20 v 6,19", "1,23 v 3,24 / 2,22 v 5,21 / 4,20 v 7,19"], 25: ["1,25 v 2,24 / 3,23 v 4,22 / 5,21 v 6,20", "1,24 v 3,25 / 2,23 v 5,22 / 4,21 v 7,20"], 26: ["1,26 v 2,25 / 3,24 v 4,23 / 5,22 v 6,21", "1,25 v 3,26 / 2,24 v 5,23 / 4,22 v 7,21"], 27: ["1,27 v 2,26 / 3,25 v 4,24 / 5,23 v 6,22", "1,26 v 3,27 / 2,25 v 5,24 / 4,23 v 7,22"] };
+// 拡張された対戦表（10〜30人でも10試合以上表示可能）
+const PAIRINGS = {
+    4: ["1,2 v 3,4", "1,3 v 2,4", "1,4 v 2,3"],
+    8: ["1,2 v 3,4 / 5,6 v 7,8", "1,3 v 5,7 / 2,4 v 6,8", "1,4 v 6,7 / 2,3 v 5,8", "1,5 v 2,6 / 3,7 v 4,8", "1,6 v 3,8 / 2,5 v 4,7", "1,7 v 2,8 / 3,4 v 5,6", "1,8 v 4,5 / 2,7 v 3,6", "1,2 v 5,8 / 3,4 v 6,7"],
+    10: ["1,2 v 3,4 / 5,6 v 7,8", "1,3 v 9,10 / 2,4 v 5,7", "1,4 v 6,9 / 2,5 v 8,10", "1,5 v 3,7 / 4,6 v 8,10", "1,6 v 2,7 / 3,8 v 9,10", "1,7 v 4,9 / 2,8 v 3,5", "1,8 v 5,9 / 2,6 v 4,10", "1,9 v 2,10 / 3,4 v 5,6", "1,10 v 3,6 / 4,7 v 5,8", "2,3 v 7,9 / 1,5 v 6,8"],
+    12: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "1,3 v 5,7 / 2,4 v 9,11 / 6,8 v 10,12", "1,4 v 6,9 / 2,5 v 8,11 / 3,7 v 10,12", "1,5 v 10,11 / 2,6 v 3,8 / 4,7 v 9,12", "1,6 v 2,7 / 3,9 v 5,12 / 4,10 v 8,11", "1,7 v 3,11 / 2,8 v 4,12 / 5,9 v 6,10", "1,8 v 5,11 / 2,9 v 4,6 / 3,12 v 7,10", "1,9 v 2,12 / 3,5 v 6,11 / 4,8 v 7,10", "1,10 v 4,5 / 2,11 v 3,6 / 7,12 v 8,9", "1,11 v 6,12 / 2,10 v 5,8 / 3,4 v 7,9"]
+};
+
+// 13人以上の場合の動的生成（大人数でも試合数を確保）
+function getP(p) {
+    if(PAIRINGS[p]) return PAIRINGS[p];
+    const res = [];
+    for(let i=0; i<12; i++) {
+        let r = [];
+        for(let c=0; c<3; c++) {
+            let s = (i*2 + c*4) % p + 1;
+            let p1 = s, p2 = (s % p) + 1, p3 = ((s+2) % p) + 1, p4 = ((s+3) % p) + 1;
+            r.push(`${p1},${p2} v ${p3},${p4}`);
+        }
+        res.push(r.join(' / '));
+    }
+    return res;
+}
 
 function render() {
     const board = document.getElementById('matchBoard');
     board.innerHTML = '';
-    const rounds = (PAIRINGS[state.p] || []);
+    const rounds = getP(state.p);
     rounds.forEach((raw, i) => {
         const courts = raw.split(' / ').slice(0, state.courts);
         const isDone = state.done.includes(i);
         const div = document.createElement('div');
-        div.className = `round ${isDone ? 'done' : ''}`;
+        div.className = `round`;
         div.style.opacity = isDone ? "0.4" : "1";
         let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${i+1}</b> <input type="checkbox" ${isDone?'checked':''} onchange="toggle(${i})"></div>`;
         courts.forEach((c, idx) => {
