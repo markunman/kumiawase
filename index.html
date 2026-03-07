@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>らんだむ・いろは | 管理ポータル</title>
+    <title>らんだむ・いろは | 完成版</title>
     <style>
         :root { --court1-bg: #E3F2FD; --court1-border: #2196F3; --court2-bg: #FFF3E0; --court2-border: #FF9800; --court3-bg: #F3E5F5; --court3-border: #9C27B0; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
@@ -48,4 +48,158 @@
         </div>
 
         <div id="admin-tools" class="setting-box">
-            <div style
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <div>人数: <b id="pCount">14</b>人</div>
+                <div style="display:flex; gap:5px;"><button onclick="changeP(-1)">-</button><button onclick="changeP(1)">+</button></div>
+                <select id="courtSel" onchange="changeC(this.value)">
+                    <option value="1">1コート</option>
+                    <option value="2">2コート</option>
+                    <option value="3">3コート</option>
+                </select>
+            </div>
+            <div id="nameGrid" class="name-grid"></div>
+            <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
+            <button onclick="handoverAdmin()" class="btn btn-handover">👤 管理者を交代（保存＆コピー）</button>
+        </div>
+        <div id="matchBoard"></div>
+    </div>
+</div>
+
+<script>
+const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
+const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
+
+// データの初期化
+let state = { p: 14, courts: 1, done: [], names: {}, locked: true };
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
+function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode=admin"; }
+
+function copyHtmlLinkDirect() {
+    const today = getTodayStr();
+    const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
+    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
+    navigator.clipboard.writeText(htmlTag).then(() => alert("コピーしました！"));
+}
+
+async function saveToCloud() {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.innerText = "保存中...";
+    try {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
+            body: JSON.stringify(state)
+        });
+        alert("保存しました！");
+    } catch(e) { alert("保存に失敗しました。"); }
+    btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
+}
+
+async function handoverAdmin() {
+    await saveToCloud();
+    const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin";
+    navigator.clipboard.writeText(`管理者を引き継ぎます：\n${adminUrl}`);
+    alert("交代リンクをコピーしました。");
+}
+
+async function loadFromCloud() {
+    try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': MASTER_KEY.trim(), 'X-Bin-Meta': 'false' }
+        });
+        if(res.ok) {
+            const data = await res.json();
+            state.p = data.p || 14;
+            state.done = data.done || [];
+            state.names = data.names || {}; // 配列ではなくオブジェクトで持つ
+            const params = new URLSearchParams(window.location.search);
+            if(params.get('mode') !== 'admin') state.courts = data.courts || 1;
+        }
+    } catch(e) { console.log("Load failed"); }
+    renderNames(); render();
+}
+
+window.onload = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlDate = params.get('d');
+    const isAdmin = params.get('mode') === 'admin';
+
+    if (urlDate === getTodayStr()) {
+        document.getElementById('main-content').style.display = 'block';
+        if (isAdmin) {
+            state.locked = false;
+            state.courts = 1;
+            document.getElementById('courtSel').value = 1;
+            document.getElementById('modeDisplay').innerText = "管理者モード";
+        } else {
+            document.getElementById('admin-tools').style.display = 'none';
+            document.getElementById('modeDisplay').innerText = "閲覧モード";
+        }
+        // まず描画して、そのあとクラウド読み込み
+        renderNames(); render();
+        loadFromCloud();
+    } else {
+        document.getElementById('setup-panel').style.display = 'block';
+    }
+};
+
+function changeP(n) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); }
+function changeC(n) { state.courts = parseInt(n); render(); }
+
+function renderNames() {
+    const grid = document.getElementById('nameGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    for(let i=1; i<=state.p; i++) {
+        const input = document.createElement('input');
+        input.className = 'name-input';
+        input.value = state.names[i] || '';
+        input.oninput = (e) => { state.names[i] = e.target.value; render(); };
+        grid.appendChild(input);
+    }
+    document.getElementById('pCount').innerText = state.p;
+}
+
+function render() {
+    const board = document.getElementById('matchBoard');
+    if(!board) return;
+    board.innerHTML = '';
+    
+    for(let i=0; i<12; i++) {
+        const div = document.createElement('div');
+        div.className = `round`;
+        const isDone = (state.done || []).includes(i);
+        div.style.opacity = isDone ? "0.4" : "1";
+        
+        let label = ALPHABET[i] || (i+1);
+        let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${label}</b> <input type="checkbox" ${isDone?'checked':''} onchange="toggle(${i})"></div>`;
+        
+        for(let c=0; c<state.courts; c++) {
+            let offset = (i * 2) + (c * 4);
+            let p1 = (offset % state.p) + 1;
+            let p2 = ((offset + 1) % state.p) + 1;
+            let p3 = ((offset + 2) % state.p) + 1;
+            let p4 = ((offset + 3) % state.p) + 1;
+            
+            const n = state.names || {};
+            const t1 = `${n[p1] || p1}・${n[p2] || p2}`;
+            const t2 = `${n[p3] || p3}・${n[p4] || p4}`;
+            html += `<div class="court court-${c+1}">${t1} <small>vs</small> ${t2}</div>`;
+        }
+        div.innerHTML = html;
+        board.appendChild(div);
+    }
+}
+
+function toggle(i) {
+    if(state.locked) return;
+    if(!state.done) state.done = [];
+    if(state.done.includes(i)) state.done = state.done.filter(x => x !== i);
+    else state.done.push(i);
+    render();
+}
+</script>
+</body>
+</html>
