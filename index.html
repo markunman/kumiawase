@@ -16,6 +16,7 @@
         .setting-box { background: #eef2f7; border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d9e0; }
         .name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px; margin-top: 10px; }
         .name-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; font-size: 0.8rem; box-sizing: border-box; }
+        .name-input:disabled { background: #f9f9f9; color: #666; }
         .round { padding: 12px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; background: white; }
         .court { padding: 8px; border-radius: 8px; border: 2px solid; display: flex; justify-content: space-around; font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
         .court-1 { background: var(--court1-bg); border-color: var(--court1-border); }
@@ -25,7 +26,6 @@
         .btn-admin { background: #1a73e8; color: white; }
         .btn-copy { background: #8e24aa; color: white; }
         .btn-sync { background: #34a853; color: white; padding: 6px 10px; font-size: 0.8rem; }
-        /* 閲覧モード用の控えめなスタイル */
         .btn-copy-mini { background: #8e24aa; color: white; padding: 6px 10px; font-size: 0.8rem; width: auto; margin: 0; }
         .btn-copy-mini.visitor { background: transparent; color: #999; border: 1px solid #ddd; font-weight: normal; }
         .btn-save { background: #1a73e8; color: white; }
@@ -68,6 +68,12 @@
 </div>
 
 <script>
+// ==========================================================
+// 【設定エリア】パスワード変更時はここを書き換えてください
+// ==========================================================
+const ADMIN_PW = "168random"; // ← ここに新しいパスワードを入力
+// ==========================================================
+
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
 const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
 
@@ -75,7 +81,15 @@ let state = { p: 14, courts: 1, done: [], names: {}, locked: true };
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
-function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode=admin"; }
+
+function jumpToAdmin() {
+    const pw = prompt("管理者パスワードを入力してください");
+    if(pw === ADMIN_PW) {
+        window.location.search = "?d=" + getTodayStr() + "&mode=admin&pw=" + pw;
+    } else {
+        alert("パスワードが違います");
+    }
+}
 
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
@@ -85,6 +99,12 @@ function copyHtmlLinkDirect() {
 }
 
 async function saveToCloud() {
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('pw') !== ADMIN_PW) {
+        alert("エラー：保存権限がありません。");
+        return;
+    }
+
     const btn = document.getElementById('saveBtn');
     btn.disabled = true; btn.innerText = "保存中...";
     try {
@@ -100,9 +120,9 @@ async function saveToCloud() {
 
 async function handoverAdmin() {
     await saveToCloud();
-    const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin";
+    const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin&pw=" + ADMIN_PW;
     navigator.clipboard.writeText(`管理者を引き継ぎます：\n${adminUrl}`);
-    alert("交代用リンクをコピーしました。");
+    alert("パスワード付き交代用リンクをコピーしました。そのままLINE等に貼り付けてください。");
 }
 
 async function loadFromCloud() {
@@ -116,7 +136,9 @@ async function loadFromCloud() {
             state.done = data.done || [];
             state.names = data.names || {};
             const params = new URLSearchParams(window.location.search);
-            if(params.get('mode') !== 'admin') state.courts = data.courts || 1;
+            if(params.get('mode') !== 'admin' || params.get('pw') !== ADMIN_PW) {
+                state.courts = data.courts || 1;
+            }
         }
     } catch(e) { console.log("Load failed"); }
     renderNames(); render();
@@ -126,10 +148,12 @@ window.onload = () => {
     const params = new URLSearchParams(window.location.search);
     const urlDate = params.get('d');
     const isAdmin = params.get('mode') === 'admin';
+    const inputPw = params.get('pw');
 
     if (urlDate === getTodayStr()) {
         document.getElementById('main-content').style.display = 'block';
-        if (isAdmin) {
+        
+        if (isAdmin && inputPw === ADMIN_PW) {
             state.locked = false;
             state.courts = 1;
             document.getElementById('courtSel').value = 1;
@@ -137,8 +161,8 @@ window.onload = () => {
         } else {
             document.getElementById('admin-tools').style.display = 'none';
             document.getElementById('modeDisplay').innerText = "閲覧モード";
-            // 閲覧モードの時はボタンを控えめな色にする
             document.getElementById('miniLinkBtn').classList.add('visitor');
+            state.locked = true;
         }
         renderNames(); render();
         loadFromCloud();
@@ -147,8 +171,8 @@ window.onload = () => {
     }
 };
 
-function changeP(n) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); }
-function changeC(n) { state.courts = parseInt(n); render(); }
+function changeP(n) { if(!state.locked) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); } }
+function changeC(n) { if(!state.locked) { state.courts = parseInt(n); render(); } }
 
 function renderNames() {
     const grid = document.getElementById('nameGrid');
@@ -158,6 +182,7 @@ function renderNames() {
         const input = document.createElement('input');
         input.className = 'name-input';
         input.value = state.names[i] || '';
+        input.disabled = state.locked;
         input.oninput = (e) => { state.names[i] = e.target.value; render(); };
         grid.appendChild(input);
     }
@@ -176,7 +201,7 @@ function render() {
         div.style.opacity = isDone ? "0.4" : "1";
         
         let label = ALPHABET[i] || (i+1);
-        let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${label}</b> <input type="checkbox" ${isDone?'checked':''} onchange="toggle(${i})"></div>`;
+        let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${label}</b> <input type="checkbox" ${isDone?'checked':''} ${state.locked?'disabled':''} onchange="toggle(${i})"></div>`;
         
         for(let c=0; c<state.courts; c++) {
             let offset = (i * 2) + (c * 4);
