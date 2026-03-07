@@ -59,7 +59,6 @@
             </div>
             <div id="nameGrid" class="name-grid"></div>
             <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
-            
             <button onclick="handoverAdmin()" class="btn btn-handover">👤 管理者を交代する（保存＆リンク取得）</button>
         </div>
         <div id="matchBoard"></div>
@@ -75,6 +74,11 @@ let state = { p: 14, courts: 1, done: [], names: Array(31).fill(''), locked: tru
 const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
 function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode=admin"; }
 
+// 数字をアルファベット(A, B, C...)に変換する関数
+function getAlphabetLabel(index) {
+    return String.fromCharCode(65 + (index % 26)); // 0->A, 1->B...
+}
+
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
     const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
@@ -82,9 +86,7 @@ function copyHtmlLinkDirect() {
     navigator.clipboard.writeText(htmlTag).then(() => alert("本日の参加用リンクをコピーしました！"));
 }
 
-// 管理者引き継ぎ処理
 async function handoverAdmin() {
-    // 1. まず保存する
     const btn = document.getElementById('saveBtn');
     btn.innerText = "保存中...";
     try {
@@ -93,133 +95,11 @@ async function handoverAdmin() {
             headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
             body: JSON.stringify(state)
         });
-        
-        // 2. 管理者URLを作成
         const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin";
         const message = `管理者を引き継ぎます。以下のリンクから続きを操作してください：\n${adminUrl}`;
-        
-        // 3. クリップボードにコピー
         await navigator.clipboard.writeText(message);
         alert("現在の状況を保存し、引き継ぎ用URLをコピーしました！\nそのままLINE等で次の管理者に貼り付けて送ってください。");
     } catch(e) {
-        alert("保存に失敗したため、引き継ぎを中断しました。ネットワークを確認してください。");
+        alert("保存に失敗したため、引き継ぎを中断しました。");
     }
-    btn.innerText = "💾 クラウドに保存して反映";
-}
-
-window.onload = () => {
-    const params = new URLSearchParams(window.location.search);
-    const urlDate = params.get('d');
-    const isAdmin = params.get('mode') === 'admin';
-    
-    if (urlDate === getTodayStr()) {
-        document.getElementById('main-content').style.display = 'block';
-        if (isAdmin) {
-            state.locked = false;
-            state.courts = 1;
-            document.getElementById('courtSel').value = 1;
-            document.getElementById('modeDisplay').innerText = "管理者モード";
-        } else {
-            document.getElementById('admin-tools').style.display = 'none';
-            document.getElementById('modeDisplay').innerText = "閲覧モード";
-        }
-        loadFromCloud(isAdmin);
-    } else { document.getElementById('setup-panel').style.display = 'block'; }
-};
-
-async function saveToCloud() {
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true; btn.innerText = "保存中...";
-    try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
-            body: JSON.stringify(state)
-        });
-        if(!res.ok) throw new Error();
-        alert("クラウドに保存しました！");
-    } catch(e) { alert("保存に失敗しました。"); }
-    btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
-}
-
-async function loadFromCloud(isAdmin = false) {
-    try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': MASTER_KEY.trim(), 'X-Bin-Meta': 'false' }
-        });
-        if(res.ok) {
-            const data = await res.json();
-            state = {...state, ...data};
-            if(isAdmin) state.courts = 1;
-            document.getElementById('courtSel').value = state.courts;
-        }
-        renderNames(); render();
-    } catch(e) { renderNames(); render(); }
-}
-
-function changeP(n) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); }
-function changeC(n) { state.courts = parseInt(n); render(); }
-
-function renderNames() {
-    const grid = document.getElementById('nameGrid');
-    grid.innerHTML = '';
-    for(let i=1; i<=state.p; i++) {
-        const input = document.createElement('input');
-        input.className = 'name-input';
-        input.value = state.names[i] || '';
-        input.oninput = (e) => { state.names[i] = e.target.value; render(); };
-        grid.appendChild(input);
-    }
-}
-
-function getP(p) {
-    const res = [];
-    for(let i=0; i<12; i++) {
-        let r = [];
-        for(let c=0; c<3; c++) {
-            let offset = (i * 2) + (c * 4);
-            let p1 = (offset % p) + 1;
-            let p2 = ((offset + 1) % p) + 1;
-            let p3 = ((offset + 2) % p) + 1;
-            let p4 = ((offset + 3) % p) + 1;
-            if(p1 === p3) p3 = (p3 % p) + 1;
-            if(p2 === p4) p4 = (p4 % p) + 1;
-            r.push(`${p1},${p2} v ${p3},${p4}`);
-        }
-        res.push(r.join(' / '));
-    }
-    return res;
-}
-
-function render() {
-    const board = document.getElementById('matchBoard');
-    board.innerHTML = '';
-    const rounds = getP(state.p);
-    rounds.forEach((raw, i) => {
-        const courts = raw.split(' / ').slice(0, state.courts);
-        const isDone = state.done.includes(i);
-        const div = document.createElement('div');
-        div.className = `round`;
-        div.style.opacity = isDone ? "0.4" : "1";
-        let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${i+1}</b> <input type="checkbox" ${isDone?'checked':''} onchange="toggle(${i})"></div>`;
-        courts.forEach((c, idx) => {
-            const teams = c.split(' v ');
-            const t1 = teams[0].split(',').map(n => state.names[n.trim()] || n.trim()).join('・');
-            const t2 = teams[1].split(',').map(n => state.names[n.trim()] || n.trim()).join('・');
-            html += `<div class="court court-${idx+1}">${t1} <small>vs</small> ${t2}</div>`;
-        });
-        div.innerHTML = html;
-        board.appendChild(div);
-    });
-    document.getElementById('pCount').innerText = state.p;
-}
-
-function toggle(i) {
-    if(state.locked) { loadFromCloud(); return; }
-    if(state.done.includes(i)) state.done = state.done.filter(x => x !== i);
-    else state.done.push(i);
-    render();
-}
-</script>
-</body>
-</html>
+    btn.innerText = "💾
