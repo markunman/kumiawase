@@ -78,8 +78,9 @@
 </div>
 
 <script>
-const BIN_ID = '★ここにBin IDを貼る★';
-const MASTER_KEY = '★ここにMaster Keyを貼る★';
+// 設定済みIDとKEY
+const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
+const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
 
 let state = { p: 8, courts: 3, done: [], names: Array(31).fill(''), locked: true };
 
@@ -88,7 +89,6 @@ const getTodayStr = () => {
     return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2);
 };
 
-// フロントパネル用関数
 function jumpToAdmin() {
     window.location.search = "?d=" + getTodayStr() + "&mode=admin";
 }
@@ -122,7 +122,6 @@ window.onload = () => {
     }
 };
 
-// --- 以下、既存のデータ処理ロジック ---
 async function saveToCloud() {
     const btn = document.getElementById('saveBtn');
     btn.disabled = true; btn.innerText = "保存中...";
