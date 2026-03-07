@@ -11,8 +11,8 @@
         #setup-panel { text-align: center; padding: 30px 10px; }
         .setup-card { background: #ffffff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         #main-content { display: none; }
-        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
-        .mode-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid #ccc; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
+        .mode-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; white-space: nowrap; }
         .setting-box { background: #eef2f7; border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d9e0; }
         .name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px; margin-top: 10px; }
         .name-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; font-size: 0.8rem; box-sizing: border-box; }
@@ -24,8 +24,10 @@
         .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 15px; transition: 0.2s; text-align: center; width: 100%; margin-bottom: 10px; font-size: 1rem; }
         .btn-admin { background: #1a73e8; color: white; }
         .btn-copy { background: #8e24aa; color: white; }
-        .btn-sync { background: #34a853; color: white; padding: 8px; }
+        .btn-sync { background: #34a853; color: white; padding: 6px 10px; font-size: 0.8rem; }
+        .btn-copy-mini { background: #8e24aa; color: white; padding: 6px 10px; font-size: 0.8rem; }
         .btn-save { background: #1a73e8; color: white; }
+        .btn-handover { background: #f4b400; color: #333; margin-top: 10px; padding: 10px; border: 2px solid #e67c00; }
     </style>
 </head>
 <body>
@@ -35,20 +37,30 @@
         <div class="setup-card"><button onclick="copyHtmlLinkDirect()" class="btn btn-copy">🔗 本日のHTMLリンクをコピー</button></div>
         <div class="setup-card" style="border-color:#1a73e8;"><button onclick="jumpToAdmin()" class="btn btn-admin">🚀 今日の管理画面を開く</button></div>
     </div>
+
     <div id="main-content">
-        <div class="status-bar"><div id="modeDisplay" class="mode-badge"></div><button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button></div>
+        <div class="status-bar">
+            <div id="modeDisplay" class="mode-badge"></div>
+            <div style="display:flex; gap:5px;">
+                <button onclick="copyHtmlLinkDirect()" class="btn btn-copy-mini" style="width:auto; margin:0;">🔗 リンクコピー</button>
+                <button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button>
+            </div>
+        </div>
+
         <div id="admin-tools" class="setting-box">
             <div style="display:flex; justify-content: space-between; align-items: center;">
                 <div>人数: <b id="pCount">14</b>人</div>
                 <div style="display:flex; gap:5px;"><button onclick="changeP(-1)">-</button><button onclick="changeP(1)">+</button></div>
                 <select id="courtSel" onchange="changeC(this.value)">
-                    <option value="1" selected>1コート</option>
+                    <option value="1">1コート</option>
                     <option value="2">2コート</option>
                     <option value="3">3コート</option>
                 </select>
             </div>
             <div id="nameGrid" class="name-grid"></div>
             <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
+            
+            <button onclick="handoverAdmin()" class="btn btn-handover">👤 管理者を交代する（保存＆リンク取得）</button>
         </div>
         <div id="matchBoard"></div>
     </div>
@@ -58,31 +70,60 @@
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
 const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
 
-// 初期値を 14人 / 1コート に設定
 let state = { p: 14, courts: 1, done: [], names: Array(31).fill(''), locked: true };
 
 const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
 function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode=admin"; }
+
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
     const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
-    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
-    navigator.clipboard.writeText(htmlTag).then(() => alert("コピーしました！"));
+    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8; padding-bottom:5px;">👉 本日のゲーム練習組み合わせ</a>`;
+    navigator.clipboard.writeText(htmlTag).then(() => alert("本日の参加用リンクをコピーしました！"));
+}
+
+// 管理者引き継ぎ処理
+async function handoverAdmin() {
+    // 1. まず保存する
+    const btn = document.getElementById('saveBtn');
+    btn.innerText = "保存中...";
+    try {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
+            body: JSON.stringify(state)
+        });
+        
+        // 2. 管理者URLを作成
+        const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin";
+        const message = `管理者を引き継ぎます。以下のリンクから続きを操作してください：\n${adminUrl}`;
+        
+        // 3. クリップボードにコピー
+        await navigator.clipboard.writeText(message);
+        alert("現在の状況を保存し、引き継ぎ用URLをコピーしました！\nそのままLINE等で次の管理者に貼り付けて送ってください。");
+    } catch(e) {
+        alert("保存に失敗したため、引き継ぎを中断しました。ネットワークを確認してください。");
+    }
+    btn.innerText = "💾 クラウドに保存して反映";
 }
 
 window.onload = () => {
     const params = new URLSearchParams(window.location.search);
     const urlDate = params.get('d');
+    const isAdmin = params.get('mode') === 'admin';
+    
     if (urlDate === getTodayStr()) {
         document.getElementById('main-content').style.display = 'block';
-        if (params.get('mode') === 'admin') {
+        if (isAdmin) {
             state.locked = false;
+            state.courts = 1;
+            document.getElementById('courtSel').value = 1;
             document.getElementById('modeDisplay').innerText = "管理者モード";
         } else {
             document.getElementById('admin-tools').style.display = 'none';
             document.getElementById('modeDisplay').innerText = "閲覧モード";
         }
-        loadFromCloud();
+        loadFromCloud(isAdmin);
     } else { document.getElementById('setup-panel').style.display = 'block'; }
 };
 
@@ -101,16 +142,15 @@ async function saveToCloud() {
     btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
 }
 
-async function loadFromCloud() {
+async function loadFromCloud(isAdmin = false) {
     try {
         const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 'X-Master-Key': MASTER_KEY.trim(), 'X-Bin-Meta': 'false' }
         });
         if(res.ok) {
             const data = await res.json();
-            // クラウドにデータがある場合は上書き
             state = {...state, ...data};
-            // 読み込み後のコート数をセレクトボックスに反映
+            if(isAdmin) state.courts = 1;
             document.getElementById('courtSel').value = state.courts;
         }
         renderNames(); render();
@@ -119,6 +159,7 @@ async function loadFromCloud() {
 
 function changeP(n) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); }
 function changeC(n) { state.courts = parseInt(n); render(); }
+
 function renderNames() {
     const grid = document.getElementById('nameGrid');
     grid.innerHTML = '';
@@ -133,8 +174,7 @@ function renderNames() {
 
 function getP(p) {
     const res = [];
-    const maxRounds = 12; // 常に12試合分生成
-    for(let i=0; i<maxRounds; i++) {
+    for(let i=0; i<12; i++) {
         let r = [];
         for(let c=0; c<3; c++) {
             let offset = (i * 2) + (c * 4);
@@ -142,7 +182,6 @@ function getP(p) {
             let p2 = ((offset + 1) % p) + 1;
             let p3 = ((offset + 2) % p) + 1;
             let p4 = ((offset + 3) % p) + 1;
-            // 重複回避の簡易ロジック
             if(p1 === p3) p3 = (p3 % p) + 1;
             if(p2 === p4) p4 = (p4 % p) + 1;
             r.push(`${p1},${p2} v ${p3},${p4}`);
@@ -174,6 +213,7 @@ function render() {
     });
     document.getElementById('pCount').innerText = state.p;
 }
+
 function toggle(i) {
     if(state.locked) { loadFromCloud(); return; }
     if(state.done.includes(i)) state.done = state.done.filter(x => x !== i);
