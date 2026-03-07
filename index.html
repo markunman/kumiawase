@@ -25,7 +25,6 @@
         .court-1 { background: var(--court1-bg); border-color: var(--court1-border); }
         .court-2 { background: var(--court2-bg); border-color: var(--court2-border); }
         .court-3 { background: var(--court3-bg); border-color: var(--court3-border); }
-        /* 休憩者表示用スタイル */
         .rest-area { font-size: 0.8rem; color: #666; margin-top: 5px; padding-left: 5px; border-left: 3px solid #ddd; }
         .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 15px; width: 100%; margin-bottom: 10px; font-size: 1rem; }
         .btn-admin { background: #1a73e8; color: white; }
@@ -79,9 +78,9 @@
 
 <script>
 // ==========================================================
-// 【設定エリア】パスワード変更時はここを書き換えてください
+// 【設定エリア】
 // ==========================================================
-const ADMIN_PW = "168random"; // ← ここに新しいパスワードを入力
+const ADMIN_PW = "168random"; 
 // ==========================================================
 
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
@@ -137,7 +136,6 @@ async function loadFromCloud() {
             state.done = data.done || [];
             state.names = data.names || {};
             const params = new URLSearchParams(window.location.search);
-            // 管理者以外はコート数も同期する
             if(params.get('mode') !== 'admin' || params.get('pw') !== ADMIN_PW) state.courts = data.courts || 1;
         }
     } catch(e) {}
@@ -201,11 +199,13 @@ function render() {
         
         let playingIds = [];
         for(let c=0; c<state.courts; c++) {
-            let offset = (i * 2) + (c * 4);
-            let p1 = (offset % state.p) + 1;
-            let p2 = ((offset + 1) % state.p) + 1;
-            let p3 = ((offset + 2) % state.p) + 1;
-            let p4 = ((offset + 3) % state.p) + 1;
+            // --- Ver1.0のロジック復元：2人ずつずれる ---
+            let base = (i * 2) + (c * 4);
+            let p1 = (base % state.p) + 1;
+            let p2 = ((base + 1) % state.p) + 1;
+            let p3 = ((base + 2) % state.p) + 1;
+            let p4 = ((base + 3) % state.p) + 1;
+            // ----------------------------------------
             playingIds.push(p1, p2, p3, p4);
             
             const n = state.names || {};
