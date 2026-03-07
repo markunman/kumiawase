@@ -3,30 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>復旧テスト</title>
+    <title>らんだむ・いろは | 管理ポータル</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f0f0; text-align: center; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .btn { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        :root { --court1-bg: #E3F2FD; --court1-border: #2196F3; --court2-bg: #FFF3E0; --court2-border: #FF9800; --court3-bg: #F3E5F5; --court3-border: #9C27B0; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #setup-panel { text-align: center; padding: 30px 10px; }
+        .setup-card { background: #ffffff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        #main-content { display: none; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
+        .mode-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; white-space: nowrap; }
+        .setting-box { background: #eef2f7; border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d9e0; }
+        .name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px; margin-top: 10px; }
+        .name-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; font-size: 0.8rem; box-sizing: border-box; }
+        .round { padding: 12px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; background: white; }
+        .court { padding: 8px; border-radius: 8px; border: 2px solid; display: flex; justify-content: space-around; font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
+        .court-1 { background: var(--court1-bg); border-color: var(--court1-border); }
+        .court-2 { background: var(--court2-bg); border-color: var(--court2-border); }
+        .court-3 { background: var(--court3-bg); border-color: var(--court3-border); }
+        .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 15px; transition: 0.2s; text-align: center; width: 100%; margin-bottom: 10px; font-size: 1rem; }
+        .btn-admin { background: #1a73e8; color: white; }
+        .btn-copy { background: #8e24aa; color: white; }
+        .btn-sync { background: #34a853; color: white; padding: 6px 10px; font-size: 0.8rem; }
+        .btn-copy-mini { background: #8e24aa; color: white; padding: 6px 10px; font-size: 0.8rem; }
+        .btn-save { background: #1a73e8; color: white; }
+        .btn-handover { background: #f4b400; color: #333; margin-top: 10px; padding: 10px; border: 2px solid #e67c00; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>らんだむ・いろは</h1>
-        <p>画面の復旧テスト中です。</p>
-        <button class="btn" onclick="location.reload()">再読み込み</button>
-        <div id="test-area" style="margin-top:20px; font-weight:bold; color:green;">
-            ✅ プログラムは正常に動作しています
-        </div>
-        <p style="font-size: 12px; color: #666; margin-top: 20px;">
-            この画面が見えたら、GitHubの更新は成功しています。
-        </p>
+<div class="container">
+    <div id="setup-panel" style="display:none;">
+        <h1 style="color:#1a73e8; margin-bottom:5px;">らんだむ・いろは</h1>
+        <div class="setup-card"><button onclick="copyHtmlLinkDirect()" class="btn btn-copy">🔗 本日のHTMLリンクをコピー</button></div>
+        <div class="setup-card" style="border-color:#1a73e8;"><button onclick="jumpToAdmin()" class="btn btn-admin">🚀 今日の管理画面を開く</button></div>
     </div>
 
-    <script>
-        // 非常にシンプルな動作確認用
-        console.log("System Ready");
-        document.getElementById('test-area').innerText = "✅ 画面表示に成功しました！";
-    </script>
-</body>
-</html>
+    <div id="main-content">
+        <div class="status-bar">
+            <div id="modeDisplay" class="mode-badge"></div>
+            <div style="display:flex; gap:5px;">
+                <button onclick="copyHtmlLinkDirect()" class="btn btn-copy-mini" style="width:auto; margin:0;">🔗 リンクコピー</button>
+                <button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button>
+            </div>
+        </div>
+
+        <div id="admin-tools" class="setting-box">
+            <div style
