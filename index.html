@@ -59,7 +59,7 @@
             </div>
             <div id="nameGrid" class="name-grid"></div>
             <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
-            <button onclick="handoverAdmin()" class="btn btn-handover">👤 管理者を交代する（保存＆リンク取得）</button>
+            <button onclick="handoverAdmin()" class="btn btn-handover">👤 管理者を交代（保存＆リンクコピー）</button>
         </div>
         <div id="matchBoard"></div>
     </div>
@@ -74,16 +74,11 @@ let state = { p: 14, courts: 1, done: [], names: Array(31).fill(''), locked: tru
 const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
 function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode=admin"; }
 
-// 数字をアルファベット(A, B, C...)に変換する関数
-function getAlphabetLabel(index) {
-    return String.fromCharCode(65 + (index % 26)); // 0->A, 1->B...
-}
-
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
     const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
     const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8; padding-bottom:5px;">👉 本日のゲーム練習組み合わせ</a>`;
-    navigator.clipboard.writeText(htmlTag).then(() => alert("本日の参加用リンクをコピーしました！"));
+    navigator.clipboard.writeText(htmlTag).then(() => alert("本日のリンクをコピーしました！"));
 }
 
 async function handoverAdmin() {
@@ -96,10 +91,53 @@ async function handoverAdmin() {
             body: JSON.stringify(state)
         });
         const adminUrl = window.location.origin + window.location.pathname + "?d=" + getTodayStr() + "&mode=admin";
-        const message = `管理者を引き継ぎます。以下のリンクから続きを操作してください：\n${adminUrl}`;
+        const message = `管理者を引き継ぎます。以下のリンクから操作してください：\n${adminUrl}`;
         await navigator.clipboard.writeText(message);
-        alert("現在の状況を保存し、引き継ぎ用URLをコピーしました！\nそのままLINE等で次の管理者に貼り付けて送ってください。");
-    } catch(e) {
-        alert("保存に失敗したため、引き継ぎを中断しました。");
-    }
-    btn.innerText = "💾
+        alert("保存完了！引き継ぎURLをコピーしました。");
+    } catch(e) { alert("保存に失敗しました。"); }
+    btn.innerText = "💾 クラウドに保存して反映";
+}
+
+window.onload = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlDate = params.get('d');
+    const isAdmin = params.get('mode') === 'admin';
+    
+    if (urlDate === getTodayStr()) {
+        document.getElementById('main-content').style.display = 'block';
+        if (isAdmin) {
+            state.locked = false;
+            state.courts = 1;
+            document.getElementById('courtSel').value = 1;
+            document.getElementById('modeDisplay').innerText = "管理者モード";
+        } else {
+            document.getElementById('admin-tools').style.display = 'none';
+            document.getElementById('modeDisplay').innerText = "閲覧モード";
+        }
+        loadFromCloud(isAdmin);
+    } else { document.getElementById('setup-panel').style.display = 'block'; }
+};
+
+async function saveToCloud() {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.innerText = "保存中...";
+    try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
+            body: JSON.stringify(state)
+        });
+        if(!res.ok) throw new Error();
+        alert("クラウドに保存しました！");
+    } catch(e) { alert("保存に失敗しました。"); }
+    btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
+}
+
+async function loadFromCloud(isAdmin = false) {
+    try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': MASTER_KEY.trim(), 'X-Bin-Meta': 'false' }
+        });
+        if(res.ok) {
+            const data = await res.json();
+            state = {...state, ...data
