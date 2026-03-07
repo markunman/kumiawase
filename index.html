@@ -3,71 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>らんだむ・いろは | 期間限定公開</title>
+    <title>らんだむ・いろは | 管理ポータル</title>
     <style>
         :root { --court1-bg: #E3F2FD; --court1-border: #2196F3; --court2-bg: #FFF3E0; --court2-border: #FF9800; --court3-bg: #F3E5F5; --court3-border: #9C27B0; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        #expired-msg { display: none; text-align: center; padding: 50px 20px; }
-        #expired-msg h2 { color: #ea4335; }
+        
+        /* フロントパネル（準備用） */
+        #setup-panel { text-align: center; padding: 30px 10px; }
+        .setup-card { background: #ffffff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
         #main-content { display: none; }
         .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
-        .mode-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid #ccc; white-space: nowrap; }
-        .mode-admin { background: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
-        .mode-read { background: #f1f3f4; color: #666; }
+        .mode-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid #ccc; }
         .setting-box { background: #eef2f7; border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d9e0; }
-        body.is-locked .admin-only { display: none; }
-        body.is-locked input[type="checkbox"] { pointer-events: none; }
         .name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px; margin-top: 10px; }
         .name-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; font-size: 0.8rem; box-sizing: border-box; }
         .round { padding: 12px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; background: white; }
-        .round.done { background: #f9f9f9; opacity: 0.5; }
         .court { padding: 8px; border-radius: 8px; border: 2px solid; display: flex; justify-content: space-around; font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
         .court-1 { background: var(--court1-bg); border-color: var(--court1-border); }
         .court-2 { background: var(--court2-bg); border-color: var(--court2-border); }
         .court-3 { background: var(--court3-bg); border-color: var(--court3-border); }
-        .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 12px; transition: 0.2s; text-align: center; text-decoration: none; display: inline-block; }
-        .btn-sync { background: #34a853; color: white; flex-grow: 1; }
-        .btn-lock { background: #5f6368; color: white; width: 100%; margin-bottom: 10px; }
-        .btn-save { background: #1a73e8; color: white; width: 100%; margin-top: 10px; }
-        .btn-share { background: #8e24aa; color: white; width: 100%; margin-top: 5px; }
+        
+        .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 15px; transition: 0.2s; text-align: center; width: 100%; margin-bottom: 10px; font-size: 1rem; }
+        .btn-admin { background: #1a73e8; color: white; }
+        .btn-copy { background: #8e24aa; color: white; }
+        .btn-sync { background: #34a853; color: white; padding: 8px; }
+        .btn-save { background: #1a73e8; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="expired-msg">
-        <h2>本日のセッションは終了しました</h2>
-        <p>このURLは有効期限が切れています。管理サイトから最新のリンクをクリックしてください。</p>
+    <div id="setup-panel" style="display:none;">
+        <h1 style="color:#1a73e8; margin-bottom:5px;">らんだむ・いろは</h1>
+        <p style="color:#666; font-size:0.9rem;">本日の練習準備（管理者用）</p>
+        
+        <div class="setup-card">
+            <p style="font-weight:bold; margin-bottom:15px;">① 参加者にURLを共有する</p>
+            <button onclick="copyHtmlLinkDirect()" class="btn btn-copy">🔗 本日のHTMLリンクをコピー</button>
+            <p style="font-size:0.7rem; color:#888;">※管理サイトの掲示板に貼り付けてください</p>
+        </div>
+
+        <div class="setup-card" style="border-color:#1a73e8;">
+            <p style="font-weight:bold; margin-bottom:15px;">② 対戦表を管理・更新する</p>
+            <button onclick="jumpToAdmin()" class="btn btn-admin">🚀 今日の管理画面を開く</button>
+            <p style="font-size:0.7rem; color:#888;">※名前の入力や試合のチェックはこちら</p>
+        </div>
     </div>
 
     <div id="main-content">
         <div class="status-bar">
-            <div id="modeDisplay" class="mode-badge mode-read">閲覧モード</div>
-            <button onclick="loadFromCloud()" class="btn btn-sync">🔄 最新の状態に更新</button>
+            <div id="modeDisplay" class="mode-badge"></div>
+            <button onclick="loadFromCloud()" class="btn btn-sync" style="width:auto; margin:0;">🔄 最新に更新</button>
         </div>
 
-        <button id="lockToggleBtn" class="btn btn-lock admin-only" onclick="toggleLock()">🔒 編集ロック（管理者用）</button>
-
-        <div style="text-align:center; margin-bottom:15px;">
-            <h1 style="font-size:1.1rem; color:#1a73e8; margin:0;">らんだむ・いろは</h1>
-        </div>
-        
-        <div class="setting-box admin-only">
+        <div id="admin-tools" class="setting-box" style="display:none;">
             <div style="display:flex; justify-content: space-between; align-items: center;">
                 <div>人数: <b id="pCount" style="font-size: 1.2rem;">8</b>人</div>
-                <div>
-                    <button onclick="changeP(-1)" style="padding:5px 10px;">-</button>
-                    <button onclick="changeP(1)" style="padding:5px 10px;">+</button>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="changeP(-1)" style="width:30px;">-</button>
+                    <button onclick="changeP(1)" style="width:30px;">+</button>
                 </div>
-                <select id="courtSel" onchange="changeC(this.value)" style="padding:5px;">
-                    <option value="1">1面</option><option value="2">2面</option><option value="3" selected>3面</option>
+                <select id="courtSel" onchange="changeC(this.value)">
+                    <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
                 </select>
             </div>
             <div id="nameGrid" class="name-grid"></div>
-            <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()">💾 クラウドに保存して反映</button>
-            <button class="btn btn-share" onclick="copyHtmlLink()">🔗 共有用HTMLリンクをコピー</button>
-            <p style="font-size:0.7rem; color:#666; margin-top:5px; text-align:center;">※管理サイトの掲示板等に貼り付け可能なタグをコピーします</p>
+            <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
         </div>
 
         <div id="matchBoard"></div>
@@ -75,7 +78,6 @@
 </div>
 
 <script>
-// --- 重要設定 ---
 const BIN_ID = '★ここにBin IDを貼る★';
 const MASTER_KEY = '★ここにMaster Keyを貼る★';
 
@@ -86,19 +88,41 @@ const getTodayStr = () => {
     return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2);
 };
 
+// フロントパネル用関数
+function jumpToAdmin() {
+    window.location.search = "?d=" + getTodayStr() + "&mode=admin";
+}
+
+function copyHtmlLinkDirect() {
+    const today = getTodayStr();
+    const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
+    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8; padding-bottom:5px;">👉 本日のゲーム練習組み合わせ</a>`;
+    navigator.clipboard.writeText(htmlTag).then(() => alert("本日のリンクをコピーしました！\n管理サイトに貼り付けてください。"));
+}
+
 window.onload = () => {
     const params = new URLSearchParams(window.location.search);
     const urlDate = params.get('d');
+    const mode = params.get('mode');
     const today = getTodayStr();
 
     if (urlDate === today) {
         document.getElementById('main-content').style.display = 'block';
+        if (mode === 'admin') {
+            state.locked = false;
+            document.getElementById('admin-tools').style.display = 'block';
+            document.getElementById('modeDisplay').innerText = "管理者モード";
+            document.getElementById('modeDisplay').style.color = "#1a73e8";
+        } else {
+            document.getElementById('modeDisplay').innerText = "閲覧モード";
+        }
         loadFromCloud();
     } else {
-        document.getElementById('expired-msg').style.display = 'block';
+        document.getElementById('setup-panel').style.display = 'block';
     }
 };
 
+// --- 以下、既存のデータ処理ロジック ---
 async function saveToCloud() {
     const btn = document.getElementById('saveBtn');
     btn.disabled = true; btn.innerText = "保存中...";
@@ -108,8 +132,8 @@ async function saveToCloud() {
             headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
             body: JSON.stringify(state)
         });
-        alert("保存完了！参加者の画面で「更新」を押すと反映されます。");
-    } catch(e) { alert("保存に失敗しました。"); }
+        alert("クラウドに保存しました！");
+    } catch(e) { alert("失敗しました。"); }
     btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
 }
 
@@ -119,38 +143,10 @@ async function loadFromCloud() {
             headers: { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' }
         });
         state = await res.json();
-        renderNames(); updateLockUI(); render();
-    } catch(e) { console.error("データ読み込み失敗"); }
+        renderNames(); render();
+    } catch(e) { console.error("読み込み失敗"); }
 }
 
-// HTMLタグ形式でコピーする関数
-function copyHtmlLink() {
-    const today = getTodayStr();
-    const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
-    
-    // HTMLタグを構築
-    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; display:inline-block; border-bottom:2px solid #1a73e8; padding-bottom:5px;">👉 本日のゲーム練習組み合わせ</a>`;
-    
-    navigator.clipboard.writeText(htmlTag).then(() => {
-        alert("HTMLリンクタグをコピーしました！\n練習参加サイトの編集画面に貼り付けてください。");
-    });
-}
-
-function toggleLock() { state.locked = !state.locked; updateLockUI(); }
-function updateLockUI() {
-    const body = document.body;
-    const btn = document.getElementById('lockToggleBtn');
-    const badge = document.getElementById('modeDisplay');
-    if (state.locked) {
-        body.classList.add('is-locked');
-        btn.innerText = "🔓 管理者モード（編集）";
-        badge.innerText = "閲覧モード"; badge.className = "mode-badge mode-read";
-    } else {
-        body.classList.remove('is-locked');
-        btn.innerText = "🔒 閲覧モード（ロック）";
-        badge.innerText = "管理者モード"; badge.className = "mode-badge mode-admin";
-    }
-}
 function changeP(n) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); }
 function changeC(n) { state.courts = parseInt(n); render(); }
 function renderNames() {
@@ -159,15 +155,15 @@ function renderNames() {
     for(let i=1; i<=state.p; i++) {
         const input = document.createElement('input');
         input.className = 'name-input';
-        input.placeholder = i;
         input.value = state.names[i] || '';
         input.oninput = (e) => { state.names[i] = e.target.value; render(); };
         grid.appendChild(input);
     }
 }
+
 const PAIRINGS = { 4: ["1,2 v 3,4", "1,3 v 2,4", "1,4 v 2,3"], 5: ["1,2 v 4,5", "1,3 v 2,4", "1,4 v 3,5", "1,5 v 2,3", "2,5 v 3,4", "2,4 v 3,5"], 6: ["1,2 v 4,5", "1,3 v 2,6", "3,5 v 4,6", "1,4 v 5,6", "1,6 v 2,3", "2,5 v 3,4"], 7: ["1,2 v 3,4", "1,5 v 6,7", "2,6 v 4,7", "2,3 v 5,7", "1,3 v 4,6", "3,7 v 5,6"], 8: ["1,2 v 3,4 / 5,6 v 7,8", "2,4 v 6,8 / 1,3 v 5,7", "1,5 v 2,6 / 3,7 v 4,8", "2,5 v 4,7 / 1,6 v 3,8", "1,4 v 3,6 / 2,7 v 5,8"], 9: ["1,2 v 4,5 / 6,7 v 8,9", "3,4 v 5,7 / 1,8 v 2,9", "1,5 v 7,8 / 2,4 v 3,6", "3,5 v 4,9 / 1,7 v 2,6", "2,8 v 5,9 / 4,6 v 1,3"], 10: ["1,4 v 2,9 / 3,5 v 8,10", "2,4 v 5,10 / 1,6 v 7,8", "1,8 v 7,10 / 2,3 v 6,9", "4,9 v 6,8 / 2,5 v 3,7", "1,9 v 5,8 / 3,10 v 4,7"], 11: ["1,2 v 3,4 / 5,6 v 9,11", "7,8 v 9,10 / 3,5 v 4,6", "1,7 v 6,8 / 2,9 v 10,11", "4,11 v 7,10 / 1,3 v 2,5", "5,8 v 6,9 / 3,11 v 1,4"], 12: ["1,7 v 3,9 / 2,4 v 5,6 / 8,10 v 11,12", "6,8 v 9,10 / 1,12 v 4,11 / 2,5 v 3,7", "2,3 v 8,9 / 4,7 v 10,11 / 1,6 v 5,12", "1,3 v 6,11 / 2,12 v 7,9 / 4,5 v 8,10"], 13: ["1,13 v 2,12 / 3,11 v 4,10 / 5,9 v 6,8", "1,12 v 3,13 / 2,11 v 5,10 / 4,9 v 7,8", "1,11 v 4,12 / 2,10 v 6,13 / 3,9 v 5,8"], 14: ["1,14 v 2,13 / 3,12 v 4,11 / 5,10 v 6,9", "1,13 v 3,14 / 2,12 v 5,11 / 4,10 v 7,14", "1,12 v 4,13 / 2,11 v 6,14 / 3,10 v 5,9"], 15: ["1,15 v 2,14 / 3,13 v 4,12 / 5,11 v 6,10", "1,14 v 3,15 / 2,13 v 5,12 / 4,11 v 7,10", "1,13 v 4,14 / 2,12 v 6,15 / 3,12 v 5,11"], 16: ["1,16 v 2,15 / 3,14 v 4,13 / 5,12 v 6,11", "1,15 v 3,16 / 2,14 v 5,13 / 4,12 v 7,11", "1,14 v 4,15 / 2,13 v 6,16 / 3,12 v 7,10"], 17: ["1,17 v 2,16 / 3,15 v 4,14 / 5,13 v 6,12", "1,16 v 3,17 / 2,15 v 5,14 / 4,13 v 7,12"], 18: ["1,18 v 2,17 / 3,16 v 4,15 / 5,14 v 6,13", "1,17 v 3,18 / 2,16 v 5,15 / 4,14 v 7,13"], 19: ["1,19 v 2,18 / 3,17 v 4,16 / 5,15 v 6,14", "1,18 v 3,19 / 2,17 v 5,16 / 4,15 v 7,14"], 20: ["1,20 v 2,19 / 3,18 v 4,17 / 5,16 v 6,15", "1,19 v 3,20 / 2,18 v 5,17 / 4,16 v 7,15"], 21: ["1,21 v 2,20 / 3,19 v 4,18 / 5,17 v 6,16", "1,20 v 3,21 / 2,19 v 5,18 / 4,17 v 7,16"], 22: ["1,22 v 2,21 / 3,20 v 4,19 / 5,18 v 6,17", "1,21 v 3,22 / 2,20 v 5,19 / 4,18 v 7,17"], 23: ["1,23 v 2,22 / 3,21 v 4,20 / 5,19 v 6,18", "1,22 v 3,23 / 2,21 v 5,20 / 4,19 v 7,18"], 24: ["1,24 v 2,23 / 3,22 v 4,21 / 5,20 v 6,19", "1,23 v 3,24 / 2,22 v 5,21 / 4,20 v 7,19"], 25: ["1,25 v 2,24 / 3,23 v 4,22 / 5,21 v 6,20", "1,24 v 3,25 / 2,23 v 5,22 / 4,21 v 7,20"], 26: ["1,26 v 2,25 / 3,24 v 4,23 / 5,22 v 6,21", "1,25 v 3,26 / 2,24 v 5,23 / 4,22 v 7,21"], 27: ["1,27 v 2,26 / 3,25 v 4,24 / 5,23 v 6,22", "1,26 v 3,27 / 2,25 v 5,24 / 4,23 v 7,22"] };
+
 function render() {
-    document.getElementById('pCount').innerText = state.p;
     const board = document.getElementById('matchBoard');
     board.innerHTML = '';
     const rounds = (PAIRINGS[state.p] || []);
@@ -176,6 +172,7 @@ function render() {
         const isDone = state.done.includes(i);
         const div = document.createElement('div');
         div.className = `round ${isDone ? 'done' : ''}`;
+        div.style.opacity = isDone ? "0.4" : "1";
         let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${i+1}</b> <input type="checkbox" ${isDone?'checked':''} onchange="toggle(${i})"></div>`;
         courts.forEach((c, idx) => {
             const teams = c.split(' v ');
@@ -186,6 +183,7 @@ function render() {
         div.innerHTML = html;
         board.appendChild(div);
     });
+    document.getElementById('pCount').innerText = state.p;
 }
 function toggle(i) {
     if(state.locked) { loadFromCloud(); return; }
