@@ -69,7 +69,6 @@
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
 const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
 
-// データの初期化
 let state = { p: 14, courts: 1, done: [], names: {}, locked: true };
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -79,8 +78,9 @@ function jumpToAdmin() { window.location.search = "?d=" + getTodayStr() + "&mode
 function copyHtmlLinkDirect() {
     const today = getTodayStr();
     const rawUrl = window.location.origin + window.location.pathname + "?d=" + today;
-    const htmlTag = `<a href="${rawUrl}" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
-    navigator.clipboard.writeText(htmlTag).then(() => alert("コピーしました！"));
+    // target="_blank" と rel="noopener noreferrer" を追加
+    const htmlTag = `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
+    navigator.clipboard.writeText(htmlTag).then(() => alert("「別ウインドウで開く」リンクをコピーしました！"));
 }
 
 async function saveToCloud() {
@@ -113,7 +113,7 @@ async function loadFromCloud() {
             const data = await res.json();
             state.p = data.p || 14;
             state.done = data.done || [];
-            state.names = data.names || {}; // 配列ではなくオブジェクトで持つ
+            state.names = data.names || {};
             const params = new URLSearchParams(window.location.search);
             if(params.get('mode') !== 'admin') state.courts = data.courts || 1;
         }
@@ -137,7 +137,6 @@ window.onload = () => {
             document.getElementById('admin-tools').style.display = 'none';
             document.getElementById('modeDisplay').innerText = "閲覧モード";
         }
-        // まず描画して、そのあとクラウド読み込み
         renderNames(); render();
         loadFromCloud();
     } else {
