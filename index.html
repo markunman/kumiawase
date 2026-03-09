@@ -34,9 +34,38 @@
         .btn-copy-mini.visitor { background: transparent; color: #999; border: 1px solid #ddd; font-weight: normal; }
         .btn-save { background: #1a73e8; color: white; }
         .btn-handover { background: #f4b400; color: #333; margin-top: 10px; padding: 10px; border: 2px solid #e67c00; }
+
+        /* 1. CSSの追加：パスワード入力用モーダルのスタイル */
+        #pw-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .pw-card {
+            background: white; padding: 25px; border-radius: 16px;
+            width: 85%; max-width: 300px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .pw-input {
+            width: 100%; padding: 12px; margin: 15px 0;
+            border: 1px solid #ccc; border-radius: 8px;
+            font-size: 1.2rem; text-align: center; box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
+<div id="pw-modal">
+    <div class="pw-card">
+        <h3 style="margin-top:0; color:#1a73e8;">管理者認証</h3>
+        <input type="password" id="pw-field" class="pw-input" placeholder="パスワードを入力">
+        <button onclick="checkPw()" class="btn btn-admin">認証して開く</button>
+        <button onclick="document.getElementById('pw-modal').style.display='none'" class="btn" style="background:#eee; margin-bottom:0; padding:10px; font-size:0.9rem;">キャンセル</button>
+    </div>
+</div>
+
 <div class="container">
     <div class="header-area">
         <div style="font-size: 2rem;">🏸</div>
@@ -81,7 +110,7 @@
 // 【重要：管理者パスワード設定エリア】 ★★★★★★★★★★★
 // パスワード変更時は、下の引用符の中（1234）を書き換えてください。
 // ==========================================================
-const ADMIN_PW = "168random"; 
+const ADMIN_PW = "1234"; 
 // ==========================================================
 
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
@@ -119,10 +148,20 @@ let state = { p: 14, courts: 1, done: [], names: {}, locked: true };
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
 
+// 3. JavaScriptの書き換え：関数を差し替える
 function jumpToAdmin() {
-    const pw = prompt("管理者パスワードを入力してください\n(設定済みの1234など)");
-    if(pw === ADMIN_PW) window.location.search = `?d=${getTodayStr()}&mode=admin&pw=${pw}`;
-    else alert("パスワードが違います");
+    document.getElementById('pw-field').value = ""; // フィールドを空にする
+    document.getElementById('pw-modal').style.display = 'flex'; // ダイアログを表示
+    document.getElementById('pw-field').focus(); // 自動でフォーカス
+}
+
+function checkPw() {
+    const pw = document.getElementById('pw-field').value;
+    if(pw === ADMIN_PW) {
+        window.location.search = `?d=${getTodayStr()}&mode=admin&pw=${pw}`;
+    } else {
+        alert("パスワードが違います");
+    }
 }
 
 function copyHtmlLinkDirect() {
