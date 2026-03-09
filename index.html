@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>らんだむ・いろは Ver2.01</title>
+    <title>らんだむ・いろは Ver2.1</title>
     <style>
         :root { --court1-bg: #E3F2FD; --court1-border: #2196F3; --court2-bg: #FFF3E0; --court2-border: #FF9800; --court3-bg: #F3E5F5; --court3-border: #9C27B0; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
@@ -35,7 +35,6 @@
         .btn-save { background: #1a73e8; color: white; }
         .btn-handover { background: #f4b400; color: #333; margin-top: 10px; padding: 10px; border: 2px solid #e67c00; }
 
-        /* 1. CSSの追加：パスワード入力用モーダルのスタイル */
         #pw-modal {
             display: none;
             position: fixed;
@@ -54,6 +53,8 @@
             border: 1px solid #ccc; border-radius: 8px;
             font-size: 1.2rem; text-align: center; box-sizing: border-box;
         }
+        /* 追加：無効表示用のスタイル */
+        #invalid-msg { display: none; text-align: center; padding: 40px 10px; color: #666; }
     </style>
 </head>
 <body>
@@ -70,7 +71,12 @@
     <div class="header-area">
         <div style="font-size: 2rem;">🏸</div>
         <h1 class="main-title">らんだむ・いろは</h1>
-        <div class="sub-title">バドミントン対戦管理共有システム Ver2.011</div>
+        <div class="sub-title">バドミントン対戦管理共有システム Ver2.1</div>
+    </div>
+
+    <div id="invalid-msg">
+        <p style="font-size: 3rem; margin: 0;">🚫</p>
+        <p>このリンクは有効期限が切れています。<br>本日のリンクにアクセスしてください。</p>
     </div>
 
     <div id="setup-panel">
@@ -107,16 +113,14 @@
 
 <script>
 // ==========================================================
-// 【重要：管理者パスワード設定エリア】 ★★★★★★★★★★★
-// パスワード変更時は、下の引用符の中（1234）を書き換えてください。
+// 【管理者パスワード設定】
 // ==========================================================
-const ADMIN_PW = "1234"; 
+const ADMIN_PW = "168random"; 
 // ==========================================================
 
 const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
 const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
 
-// 指定された対戦スケジュールデータ
 const SCHEDULE_DATA = {
     4: ["1,2v3,4","1,3v2,4","1,4v2,3","1,3v2,4","1,2v3,4","1,4v2,3","1,3v2,4","1,2v3,4","1,4v2,3","1,3v2,4","1,2v3,4","1,4v2,3","1,3v2,4","1,2v3,4","1,4v2,3"],
     5: ["1,2v4,5","1,3v2,4","1,4v3,5","1,5v2,3","2,5v3,4","2,4v3,5","1,3v2,5","1,2v4,5","1,5v3,4","1,4v2,3","1,4v3,5","2,3v4,5","1,3v2,4","1,4v2,5","1,2v3,5"],
@@ -148,11 +152,10 @@ let state = { p: 14, courts: 1, done: [], names: {}, locked: true };
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
 
-// 3. JavaScriptの書き換え：関数を差し替える
 function jumpToAdmin() {
-    document.getElementById('pw-field').value = ""; // フィールドを空にする
-    document.getElementById('pw-modal').style.display = 'flex'; // ダイアログを表示
-    document.getElementById('pw-field').focus(); // 自動でフォーカス
+    document.getElementById('pw-field').value = "";
+    document.getElementById('pw-modal').style.display = 'flex';
+    document.getElementById('pw-field').focus();
 }
 
 function checkPw() {
@@ -214,8 +217,14 @@ window.onload = () => {
     const params = new URLSearchParams(window.location.search);
     const urlDate = params.get('d');
     const isAdmin = params.get('mode') === 'admin' && params.get('pw') === ADMIN_PW;
+    const todayStr = getTodayStr();
 
-    if (urlDate === getTodayStr()) {
+    // 修正：日付パラメータの有無と値による分岐
+    if (!urlDate) {
+        // パラメータなし：新規フロントページ（管理画面への入口）を表示
+        document.getElementById('setup-panel').style.display = 'block';
+    } else if (urlDate === todayStr) {
+        // 当日のURL：コンテンツを表示
         document.getElementById('main-content').style.display = 'block';
         if (isAdmin) {
             state.locked = false;
@@ -229,7 +238,8 @@ window.onload = () => {
         renderNames(); render();
         loadFromCloud();
     } else {
-        document.getElementById('setup-panel').style.display = 'block';
+        // 前日以前のURL：無効メッセージを表示
+        document.getElementById('invalid-msg').style.display = 'block';
     }
 };
 
@@ -255,56 +265,33 @@ function render() {
     const board = document.getElementById('matchBoard');
     if(!board) return;
     board.innerHTML = '';
-    
-    // 指定された人数のスケジュールを取得（なければ空配列）
     const schedule = SCHEDULE_DATA[state.p] || [];
-    
-    // スケジュールの数に合わせて表示（最大20試合程度）
     schedule.forEach((roundStr, i) => {
         const div = document.createElement('div');
         div.className = `round`;
         const isDone = (state.done || []).includes(i);
         div.style.opacity = isDone ? "0.4" : "1";
-        
         let label = ALPHABET[i] || (i+1);
         let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${label}</b> <input type="checkbox" ${isDone?'checked':''} ${state.locked?'disabled':''} onchange="toggle(${i})"></div>`;
-        
-        // "1,2v3,4/5,6v7,8" のような形式を分割してコートごとに表示
         const courts = roundStr.split('/');
         let playingIds = [];
-
         courts.forEach((courtStr, cIdx) => {
-            // "1,2v3,4" を "1,2" と "3,4" に分ける
             const teams = courtStr.split('v');
             if(teams.length < 2) return;
-            
             const teamA = teams[0].split(',');
             const teamB = teams[1].split(',');
-            
-            // 出場プレイヤーIDを記録
             teamA.forEach(id => playingIds.push(parseInt(id)));
             teamB.forEach(id => playingIds.push(parseInt(id)));
-
             const n = state.names || {};
             const p1 = n[teamA[0]] || teamA[0];
             const p2 = n[teamA[1]] || teamA[1];
             const p3 = n[teamB[0]] || teamB[0];
             const p4 = n[teamB[1]] || teamB[1];
-
             html += `<div class="court court-${cIdx+1}">${p1}・${p2} <small>vs</small> ${p3}・${p4}</div>`;
         });
-
-        // 休憩者の計算
         let restingNames = [];
-        for(let j=1; j<=state.p; j++) {
-            if(!playingIds.includes(j)) {
-                restingNames.push(state.names[j] || j);
-            }
-        }
-        if(restingNames.length > 0) {
-            html += `<div class="rest-area">☕ 休み: ${restingNames.join('・')}</div>`;
-        }
-
+        for(let j=1; j<=state.p; j++) { if(!playingIds.includes(j)) { restingNames.push(state.names[j] || j); } }
+        if(restingNames.length > 0) { html += `<div class="rest-area">☕ 休み: ${restingNames.join('・')}</div>`; }
         div.innerHTML = html;
         board.appendChild(div);
     });
@@ -320,4 +307,3 @@ function toggle(i) {
 </script>
 </body>
 </html>
-
