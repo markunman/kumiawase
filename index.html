@@ -3,200 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>らんだむ・いろは Ver2.2</title>
+    <title>らんだむ・いろは Ver2.0</title>
     <style>
-        /* 2.0/2.2 仕様に基づくカラー定義 [4, 5] */
-        :root {
-            --blue: #007cff;  /* 1コート: 青 */
-            --orange: #ff8c00; /* 2コート: 橙 */
-            --purple: #9400d3; /* 3コート: 紫 */
-            --gray: #6c757d;
-        }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .admin-area { display: none; background: #fffefe; border: 3px solid #ffcccc; padding: 20px; border-radius: 12px; margin-top: 10px; }
-        h1 { font-size: 1.2rem; text-align: center; margin: 0; }
-        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; font-size: 1rem; color: white; }
-        .btn-primary { background: var(--blue); }
-        .btn-cloud { background: #28a745; }
-        .btn-copy { background: var(--gray); }
-        
-        /* 試合順表示: A・B・C表記 [仕様4] */
-        .round-block { border-left: 8px solid #333; margin-bottom: 30px; padding-left: 10px; background: white; padding-top: 10px; padding-bottom: 10px; border-radius: 0 8px 8px 0; }
-        .round-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 10px; }
-        
-        /* コート指定色 [仕様4, 5] */
-        .court { padding: 12px; border-radius: 8px; color: white; font-weight: bold; text-align: center; margin-bottom: 8px; font-size: 1.1rem; }
-        .court-1 { background: var(--blue); }
-        .court-2 { background: var(--orange); }
-        .court-3 { background: var(--purple); }
-        
-        /* 休憩者表示 [仕様4, 8] */
-        .waiting { background: #e9ecef; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #495057; border: 1px dashed #adb5bd; }
-        textarea { width: 100%; height: 120px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; padding: 10px; font-size: 1rem; }
-        .controls { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
-        input[type="number"] { width: 60px; padding: 8px; font-size: 1.1rem; }
-        .hidden { display: none; }
+        :root { --court1-bg: #E3F2FD; --court1-border: #2196F3; --court2-bg: #FFF3E0; --court2-border: #FF9800; --court3-bg: #F3E5F5; --court3-border: #9C27B0; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header-area { text-align: center; padding: 10px 0 20px 0; }
+        .main-title { color: #1a73e8; font-size: 1.4rem; font-weight: bold; margin: 0; }
+        .sub-title { color: #1a73e8; font-size: 0.9rem; font-weight: bold; margin-top: 4px; }
+        #setup-panel { text-align: center; padding: 20px 10px; display: none; }
+        .setup-card { background: #ffffff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 20px; margin-top: 15px; }
+        #main-content { display: none; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
+        .mode-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; white-space: nowrap; }
+        .setting-box { background: #eef2f7; border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d9e0; }
+        .name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px; margin-top: 10px; }
+        .name-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; font-size: 0.8rem; box-sizing: border-box; }
+        .name-input:disabled { background: #f9f9f9; color: #666; }
+        .round { padding: 12px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; background: white; }
+        .court { padding: 8px; border-radius: 8px; border: 2px solid; display: flex; justify-content: space-around; font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
+        .court-1 { background: var(--court1-bg); border-color: var(--court1-border); }
+        .court-2 { background: var(--court2-bg); border-color: var(--court2-border); }
+        .court-3 { background: var(--court3-bg); border-color: var(--court3-border); }
+        /* 休憩者表示用スタイル */
+        .rest-area { font-size: 0.8rem; color: #666; margin-top: 5px; padding-left: 5px; border-left: 3px solid #ddd; }
+        .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; padding: 15px; width: 100%; margin-bottom: 10px; font-size: 1rem; }
+        .btn-admin { background: #1a73e8; color: white; }
+        .btn-copy { background: #8e24aa; color: white; }
+        .btn-sync { background: #34a853; color: white; padding: 6px 10px; font-size: 0.8rem; width: auto; margin: 0; }
+        .btn-copy-mini { background: #8e24aa; color: white; padding: 6px 10px; font-size: 0.8rem; width: auto; margin: 0; }
+        .btn-copy-mini.visitor { background: transparent; color: #999; border: 1px solid #ddd; font-weight: normal; }
+        .btn-save { background: #1a73e8; color: white; }
+        .btn-handover { background: #f4b400; color: #333; margin-top: 10px; padding: 10px; border: 2px solid #e67c00; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h1>🏸 らんだむ・いろは Ver2.2</h1>
-    <button class="btn btn-copy" onclick="copyViewerURL()">🔗 共有リンクをコピー</button>
-    <button class="btn btn-primary" onclick="unlockAdmin()">🚀 管理者モードを解除</button>
-</div>
-
-<!-- 管理者設定画面 [仕様2, 3] -->
-<div id="admin-panel" class="admin-area card">
-    <h3>管理者専用設定</h3>
-    <div class="controls">
-        人数: <input type="number" id="p-count" value="12" min="4" max="30">
-        コート数: 
-        <select id="c-count" style="padding:8px;">
-            <option value="1">1面</option>
-            <option value="2">2面</option>
-            <option value="3" selected>3面</option>
-        </select>
+<div class="container">
+    <div class="header-area">
+        <div style="font-size: 2rem;">🏸</div>
+        <h1 class="main-title">らんだむ・いろは</h1>
+        <div class="sub-title">バドミントン対戦管理共有システム Ver2.0</div>
     </div>
-    <p style="font-size:0.9rem; margin-bottom:5px;">参加者名簿（1行に1名ずつ入力） [仕様5]</p>
-    <textarea id="name-list" placeholder="名前をここに入力してください"></textarea>
-    
-    <button class="btn btn-cloud" onclick="saveAndRender()">💾 クラウドに保存して反映</button>
-    <button class="btn" style="background:#dc3545;" onclick="transferAdmin()">👤 管理者を交代（保存＆コピー）</button>
-</div>
 
-<div id="display-area">
-    <!-- 対戦表がここに一括表示される [仕様4] -->
+    <div id="setup-panel">
+        <div class="setup-card"><button onclick="copyHtmlLinkDirect()" class="btn btn-copy">🔗 本日のHTMLリンクをコピー</button></div>
+        <div class="setup-card" style="border-color:#1a73e8;"><button onclick="jumpToAdmin()" class="btn btn-admin">🚀 今日の管理画面を開く</button></div>
+    </div>
+
+    <div id="main-content">
+        <div class="status-bar">
+            <div id="modeDisplay" class="mode-badge"></div>
+            <div style="display:flex; gap:5px;">
+                <button id="miniLinkBtn" onclick="copyHtmlLinkDirect()" class="btn btn-copy-mini">🔗 リンクコピー</button>
+                <button onclick="loadFromCloud()" class="btn btn-sync">🔄 最新に更新</button>
+            </div>
+        </div>
+
+        <div id="admin-tools" class="setting-box" style="display:none;">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <div>人数: <b id="pCount">14</b>人</div>
+                <div style="display:flex; gap:5px;"><button onclick="changeP(-1)">-</button><button onclick="changeP(1)">+</button></div>
+                <select id="courtSel" onchange="changeC(this.value)">
+                    <option value="1">1コート</option>
+                    <option value="2">2コート</option>
+                    <option value="3">3コート</option>
+                </select>
+            </div>
+            <div id="nameGrid" class="name-grid"></div>
+            <button id="saveBtn" class="btn btn-save" onclick="saveToCloud()" style="margin-top:10px; padding:10px;">💾 クラウドに保存して反映</button>
+            <button onclick="handoverAdmin()" class="btn btn-handover">👤 管理者を交代（保存＆コピー）</button>
+        </div>
+        <div id="matchBoard"></div>
+    </div>
 </div>
 
 <script>
-// ============================================================
-// 【重要】管理者パスワードの設定
-// ここを好きなパスワードに書き換えてください。
-// ============================================================
-const ADMIN_PASSWORD = "いろは2026"; 
-// ============================================================
+// ==========================================================
+// 【設定エリア】パスワード変更時はここを書き換えてください
+// ==========================================================
+const ADMIN_PW = "1234"; // ← ここに新しいパスワードを入力
+// ==========================================================
 
-/**
- * ソース資料 [3]〜[2] の組み合わせデータを完全に構造化
- * AIによるランダム生成を防ぎ、ソースのロジックを100%反映します。
- */
-const MASTER_MATCH_DATA = {
-    4: ["1,2 v 3,4", "1,3 v 2,4", "1,4 v 2,3", "1,3 v 2,4", "1,2 v 3,4", "1,4 v 2,3", "1,3 v 2,4", "1,2 v 3,4", "1,4 v 2,3", "1,3 v 2,4", "1,2 v 3,4", "1,4 v 2,3", "1,3 v 2,4", "1,2 v 3,4", "1,4 v 2,3"], // [3]
-    5: ["1,2 v 4,5", "1,3 v 2,4", "1,4 v 3,5", "1,5 v 2,3", "2,5 v 3,4", "2,4 v 3,5", "1,3 v 2,5", "1,2 v 4,5", "1,5 v 3,4", "1,4 v 2,3", "1,4 v 3,5", "2,3 v 4,5", "1,3 v 2,4", "1,4 v 2,5", "1,2 v 3,5"], // [3]
-    6: ["1,2 v 4,5", "1,3 v 2,6", "3,5 v 4,6", "1,4 v 5,6", "1,6 v 2,3", "2,5 v 3,4", "1,5 v 3,4", "2,4 v 5,6", "1,2 v 3,6", "1,3 v 4,5", "1,4 v 2,6", "2,5 v 3,6", "1,4 v 2,3", "1,5 v 2,6", "3,5 v 4,6"], // [3, 6]
-    7: ["1,2 v 3,4", "1,5 v 6,7", "2,6 v 4,7", "2,3 v 5,7", "1,3 v 4,6", "3,7 v 5,6", "1,4 v 2,5", "1,6 v 2,7", "3,5 v 4,7", "1,6 v 4,5", "2,5 v 3,6", "1,7 v 3,4", "1,3 v 2,4", "2,6 v 5,7", "1,4 v 3,7"], // [6]
-    8: ["1,2 v 3,4 / 5,6 v 7,8", "2,4 v 6,8 / 1,3 v 5,7", "1,5 v 2,6 / 3,7 v 4,8", "2,5 v 4,7 / 1,6 v 3,8", "1,7 v 4,6 / 2,3 v 5,8", "3,6 v 4,5 / 1,8 v 2,7", "1,4 v 2,8 / 3,5 v 6,7", "2,6 v 3,7 / 1,4 v 5,8", "1,2 v 6,7 / 3,5 v 4,8", "2,8 v 5,6 / 1,7 v 3,4", "1,6 v 4,5 / 2,7 v 3,8", "2,3 v 4,6 / 1,5 v 7,8", "1,8 v 3,6 / 2,4 v 5,7", "4,7 v 6,8 / 1,3 v 2,5", "1,8 v 3,6 / 2,7 v 4,5"], // [6, 7]
-    9: ["1,2 v 4,5 / 6,7 v 8,9", "3,4 v 5,7 / 1,8 v 2,9", "1,5 v 7,8 / 2,4 v 3,6", "3,5 v 4,9 / 1,7 v 2,6", "1,9 v 4,7 / 2,3 v 6,8", "5,6 v 7,9 / 1,4 v 3,8", "1,3 v 5,9 / 2,8 v 4,6", "3,7 v 4,8 / 2,5 v 6,9", "1,6 v 5,8 / 2,7 v 3,9", "2,3 v 5,7 / 1,4 v 6,9", "1,6 v 3,4 / 2,8 v 5,9", "4,5 v 8,9 / 1,2 v 3,7", "2,5 v 4,7 / 3,9 v 6,8", "2,7 v 4,8 / 1,5 v 3,6", "1,3 v 2,9 / 4,6 v 7,8"], // [7, 8]
-    10: ["1,4 v 2,9 / 3,5 v 8,10", "2,4 v 5,10 / 1,6 v 7,8", "1,8 v 7,10 / 2,3 v 6,9", "4,9 v 6,8 / 2,5 v 3,7", "1,7 v 3,6 / 2,10 v 4,8", "4,6 v 5,8 / 1,10 v 7,9", "1,2 v 3,10 / 5,7 v 8,9", "3,9 v 4,10 / 1,5 v 2,6", "2,8 v 5,9 / 3,4 v 6,7", "2,7 v 6,10 / 1,9 v 3,5", "1,5 v 4,10 / 2,9 v 3,8", "5,6 v 9,10 / 2,8 v 4,7", "1,3 v 6,8 / 4,9 v 7,10", "3,6 v 4,8 / 1,7 v 2,5", "1,10 v 5,8 / 2,4 v 7,9"], // [8]
-    11: ["1,2 v 3,4 / 5,6 v 9,11", "7,8 v 9,10 / 3,5 v 4,6", "1,7 v 6,8 / 2,9 v 10,11", "4,11 v 7,10 / 1,3 v 2,5", "1,10 v 7,11 / 2,4 v 8,9", "3,7 v 5,11 / 1,6 v 8,10", "2,8 v 5,10 / 3,6 v 4,9", "2,3 v 6,11 / 1,8 v 5,9", "2,10 v 5,7 / 3,11 v 4,8", "6,7 v 8,11 / 1,9 v 4,10", "1,5 v 3,9 / 2,6 v 4,7", "3,5 v 6,9 / 1,4 v 2,11", "1,8 v 2,7 / 4,5 v 6,10", "3,10 v 7,9 / 2,11 v 5,8", "1,11 v 6,9 / 3,8 v 4,10"], // [8, 9]
-    12: ["1,7 v 3,9 / 2,4 v 5,6 / 8,10 v 11,12", "6,8 v 9,10 / 1,12 v 4,11 / 2,5 v 3,7", "2,3 v 8,9 / 4,7 v 10,11 / 1,6 v 5,12", "1,11 v 2,6 / 3,8 v 4,5 / 7,9 v 10,12", "5,11 v 9,12 / 1,4 v 7,8 / 2,10 v 3,6", "2,12 v 4,9 / 5,8 v 7,11 / 1,3 v 6,10", "1,8 v 3,11 / 2,9 v 4,10 / 5,7 v 6,12", "5,9 v 8,11 / 1,2 v 7,12 / 3,10 v 4,6", "3,5 v 4,12 / 6,7 v 9,11 / 1,10 v 2,8", "1,9 v 5,6 / 2,11 v 4,8 / 3,12 v 7,10", "5,10 v 6,11 / 1,8 v 2,7 / 3,4 v 9,12", "3,11 v 7,10 / 6,9 v 8,12 / 1,5 v 2,4", "1,3 v 9,11 / 2,10 v 5,12 / 4,8 v 6,7", "4,6 v 7,9 / 1,5 v 8,10 / 2,3 v 11,12", "2,5 v 9,10 / 3,6 v 7,8 / 1,11 v 4,12"], // [9, 10]
-    13: ["1,9 v 4,8 / 2,5 v 3,6 / 10,11 v 12,13", "4,9 v 10,12 / 1,2 v 5,11 / 3,13 v 7,8", "4,6 v 11,13 / 5,7 v 8,9 / 1,10 v 2,3", "1,8 v 2,9 / 3,10 v 6,11 / 5,12 v 7,13", "3,11 v 8,13 / 1,4 v 7,10 / 2,6 v 9,12", "3,8 v 4,12 / 5,6 v 7,11 / 2,13 v 9,10", "1,3 v 11,12 / 2,7 v 4,13 / 5,8 v 6,10", "3,5 v 9,13 / 1,12 v 6,8 / 2,11 v 4,7", "2,12 v 5,13 / 4,10 v 8,11 / 1,7 v 6,9", "1,11 v 5,9 / 2,4 v 6,7 / 3,12 v 8,10", "7,9 v 10,13 / 1,5 v 8,12 / 3,6 v 4,11", "2,8 v 3,4 / 5,10 v 7,9 / 1,13 v 6,12", "1,6 v 9,11 / 2,10 v 7,12 / 3,13 v 4,5", "4,10 v 6,13 / 1,9 v 3,7 / 2,11 v 5,12", "3,9 v 4,6 / 7,8 v 11,13 / 1,10 v 2,5"], // [11, 12]
-    14: ["1,9 v 2,13 / 3,4 v 6,7 / 10,11 v 12,14", "4,7 v 8,9 / 1,13 v 11,14 / 2,5 v 3,12", "3,11 v 9,10 / 7,12 v 13,14 / 1,8 v 5,6", "1,5 v 7,9 / 2,10 v 6,13 / 4,8 v 11,12", "5,8 v 9,14 / 1,2 v 4,10 / 3,6 v 11,13", "2,6 v 5,7 / 3,10 v 8,12 / 1,14 v 4,9", "2,3 v 8,14 / 4,5 v 7,13 / 6,11 v 10,12", "6,10 v 7,14 / 3,9 v 4,12 / 5,11 v 8,13", "2,8 v 12,13 / 5,9 v 10,14 / 1,6 v 4,11", "1,3 v 6,14 / 2,4 v 5,13 / 7,10 v 9,12", "6,12 v 9,13 / 1,4 v 3,5 / 2,11 v 7,8", "3,8 v 10,13 / 4,14 v 9,11 / 1,12 v 2,7", "1,11 v 7,12 / 2,14 v 6,8 / 3,13 v 5,10", "3,14 v 7,11 / 1,10 v 5,8 / 2,9 v 4,6", "2,12 v 5,14 / 4,13 v 8,11 / 1,7 v 6,9"], // [12, 13]
-    15: ["1,2 v 4,8 / 6,7 v 9,11 / 12,13 v 14,15", "4,9 v 10,11 / 1,6 v 13,14 / 2,5 v 3,12", "3,15 v 4,7 / 5,6 v 8,10 / 2,12 v 9,13", "1,14 v 3,5 / 4,15 v 6,8 / 7,11 v 10,12", "7,10 v 8,14 / 1,3 v 9,15 / 2,13 v 5,11", "3,13 v 7,8 / 4,6 v 5,12 / 2,15 v 9,10", "1,11 v 8,12 / 3,7 v 6,10 / 4,13 v 9,14", "5,8 v 7,9 / 1,15 v 6,11 / 2,4 v 10,14", "2,14 v 8,15 / 3,6 v 11,12 / 1,7 v 5,13", "1,13 v 4,10 / 2,9 v 12,14 / 3,11 v 5,15", "8,11 v 10,13 / 1,5 v 2,6 / 4,14 v 7,15", "3,8 v 6,12 / 5,9 v 11,15 / 1,10 v 2,7", "2,8 v 11,13 / 3,10 v 6,14 / 4,5 v 9,12", "5,14 v 7,13 / 1,9 v 2,3 / 4,12 v 6,15", "7,12 v 10,15 / 3,9 v 8,13 / 1,14 v 4,11"], // [13, 14]
-    16: ["1,9 v 2,4 / 3,5 v 8,10 / 12,13 v 14,16", "9,11 v 12,15 / 1,4 v 5,13 / 2,6 v 3,7", "2,16 v 5,6 / 7,11 v 13,14 / 1,10 v 8,15", "3,10 v 7,12 / 4,16 v 11,14 / 6,8 v 9,15", "6,9 v 10,11 / 1,8 v 2,12 / 3,15 v 5,14", "4,9 v 7,16 / 6,11 v 8,14 / 2,13 v 10,15", "1,5 v 7,14 / 2,15 v 4,12 / 3,11 v 13,16", "5,10 v 6,16 / 1,13 v 3,9 / 4,7 v 8,12", "2,5 v 11,12 / 4,13 v 8,16 / 1,14 v 6,10", "2,9 v 3,13 / 4,5 v 6,12 / 7,10 v 11,15", "9,10 v 12,14 / 1,7 v 5,16 / 3,8 v 4,15", "2,7 v 6,14 / 3,16 v 8,9 / 1,15 v 11,13", "1,16 v 7,15 / 2,3 v 10,13 / 5,8 v 9,14", "5,11 v 10,12 / 1,6 v 8,13 / 3,4 v 15,16", "3,6 v 9,12 / 4,8 v 14,15 / 2,7 v 11,16"], // [14, 15]
-    17: ["1,15 v 3,17 / 2,6 v 5,8 / 10,11 v 12,16", "9,12 v 14,17 / 1,10 v 2,13 / 3,4 v 5,7", "4,15 v 6,9 / 7,8 v 13,16 / 2,5 v 11,14", "3,7 v 6,12 / 4,17 v 8,11 / 13,14 v 15,16", "7,10 v 8,17 / 1,12 v 6,15 / 2,16 v 3,9", "2,17 v 4,13 / 3,10 v 9,14 / 1,8 v 5,11", "4,12 v 10,16 / 5,6 v 9,13 / 7,11 v 14,15", "4,5 v 13,15 / 1,11 v 3,6 / 2,8 v 12,17", "5,10 v 11,16 / 7,13 v 8,9 / 1,4 v 12,14", "1,7 v 9,16 / 2,14 v 6,17 / 3,15 v 8,10", "3,16 v 13,17 / 1,5 v 7,14 / 2,10 v 4,9", "3,12 v 5,15 / 6,11 v 7,16 / 1,9 v 8,13", "1,6 v 10,17 / 2,15 v 7,12 / 3,14 v 4,11", "6,10 v 11,13 / 2,4 v 8,15 / 5,12 v 16,17", "2,11 v 8,14 / 3,13 v 7,17 / 1,16 v 9,15"], // [15-17]
-    18: ["1,15 v 6,9 / 3,11 v 7,12 / 13,16 v 17,18", "8,12 v 14,17 / 1,13 v 10,16 / 2,9 v 4,5", "3,5 v 4,8 / 10,11 v 14,15 / 2,18 v 6,7", "2,14 v 3,9 / 4,16 v 7,11 / 5,8 v 13,18", "5,10 v 6,17 / 1,11 v 3,13 / 2,15 v 12,18", "7,8 v 10,12 / 9,15 v 16,17 / 1,6 v 4,14", "1,3 v 6,12 / 4,11 v 8,18 / 5,13 v 7,14", "6,15 v 13,14 / 2,10 v 5,16 / 3,7 v 9,17", "2,4 v 10,15 / 8,9 v 12,16 / 1,18 v 11,17", "2,11 v 8,17 / 3,16 v 5,15 / 6,13 v 9,12", "7,9 v 8,14 / 1,10 v 4,18 / 2,5 v 11,13", "4,6 v 10,17 / 12,14 v 16,18 / 1,7 v 3,15", "1,12 v 5,9 / 3,4 v 14,16 / 6,10 v 13,15", "9,16 v 10,18 / 2,6 v 8,11 / 4,7 v 5,17", "3,18 v 8,15 / 7,13 v 11,12 / 1,14 v 2,17"], // [17, 18]
-    19: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "18,19 v 3,6 / 13,14 v 1,15 / 16,17 v 2,5", "8,11 v 14,16 / 10,12 v 15,17 / 4,7 v 9,13", "1,3 v 5,9 / 2,18 v 7,10 / 6,19 v 4,11", "14,15 v 2,19 / 8,13 v 3,17 / 12,16 v 1,18", "7,11 v 15,16 / 4,5 v 8,10 / 6,9 v 14,17", "2,12 v 6,13 / 3,18 v 5,11 / 1,19 v 7,9", "4,14 v 17,18 / 8,12 v 2,15 / 10,13 v 16,19", "5,15 v 4,9 / 1,6 v 11,17 / 3,7 v 10,14", "8,16 v 9,18 / 12,19 v 5,7 / 2,13 v 1,11", "3,14 v 4,12 / 6,15 v 10,16 / 8,17 v 13,19", "7,18 v 6,14 / 1,5 v 10,17 / 2,9 v 3,11", "1,8 v 9,12 / 13,15 v 11,18 / 4,19 v 2,16", "3,15 v 7,17 / 5,14 v 12,13 / 6,10 v 4,8", "9,11 v 14,19 / 1,16 v 6,7 / 2,10 v 5,18", "4,17 v 1,12 / 8,18 v 15,19 / 3,13 v 9,16", "2,7 v 8,14 / 3,5 v 6,12 / 10,11 v 4,13", "5,16 v 11,19 / 1,10 v 15,18 / 9,17 v 2,6", "4,16 v 14,18 / 7,12 v 13,17 / 3,19 v 8,15", "1,14 v 5,13 / 2,11 v 4,6 / 8,9 v 3,10"], // [18-20]
-    20: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "19,20 v 3,5 / 13,14 v 1,15 / 16,17 v 2,18", "7,10 v 14,16 / 8,11 v 15,17 / 4,6 v 9,13", "12,18 v 3,6 / 1,19 v 7,9 / 2,20 v 8,10", "12,15 v 16,20 / 4,5 v 14,17 / 11,13 v 18,19", "2,9 v 5,15 / 3,7 v 13,17 / 1,6 v 11,16", "4,12 v 2,19 / 8,14 v 3,9 / 10,18 v 1,20", "7,11 v 4,20 / 5,13 v 8,16 / 6,15 v 10,19", "2,14 v 6,11 / 3,18 v 7,15 / 12,17 v 1,9", "4,8 v 16,18 / 5,10 v 12,13 / 14,19 v 17,20", "11,15 v 4,10 / 2,6 v 7,13 / 3,16 v 9,19", "8,17 v 2,15 / 12,14 v 7,20 / 1,5 v 11,18", "4,16 v 5,14 / 6,9 v 13,20 / 8,19 v 1,12", "2,7 v 16,19 / 3,10 v 11,17 / 15,18 v 4,9", "3,8 v 12,20 / 5,17 v 6,18 / 1,13 v 10,14", "4,15 v 13,19 / 7,16 v 6,12 / 9,11 v 5,20", "8,18 v 9,14 / 1,17 v 4,7 / 2,3 v 10,11", "6,19 v 10,17 / 15,16 v 1,3 / 5,12 v 2,13", "8,13 v 4,18 / 6,14 v 15,20 / 5,7 v 11,19", "9,17 v 12,16 / 1,8 v 2,10 / 3,14 v 18,20"], // [20, 21]
-    21: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "19,20 v 3,21 / 13,14 v 1,15 / 16,17 v 2,18", "6,10 v 14,16 / 7,11 v 15,17 / 4,5 v 9,13", "8,12 v 4,19 / 18,20 v 1,5 / 2,21 v 6,9", "11,13 v 16,19 / 3,7 v 12,14 / 10,15 v 8,18", "1,21 v 7,10 / 2,5 v 11,14 / 17,20 v 4,6", "3,9 v 18,19 / 8,13 v 17,21 / 12,15 v 16,20", "6,12 v 13,18 / 1,8 v 9,16 / 2,7 v 15,19", "4,14 v 7,21 / 11,20 v 1,6 / 3,5 v 10,17", "2,13 v 10,20 / 8,9 v 14,17 / 12,16 v 5,21", "1,19 v 2,12 / 3,15 v 6,13 / 4,11 v 16,18", "5,10 v 14,19 / 8,21 v 3,11 / 7,20 v 9,18", "2,4 v 8,10 / 5,15 v 9,21 / 1,17 v 12,13", "6,11 v 17,19 / 3,18 v 14,20 / 4,7 v 15,16", "2,8 v 6,14 / 5,13 v 7,19 / 1,9 v 10,11", "3,16 v 2,17 / 4,15 v 9,20 / 12,18 v 10,21", "11,15 v 18,21 / 1,7 v 6,16 / 5,12 v 4,17", "8,20 v 5,11 / 2,14 v 9,19 / 3,13 v 1,10", "4,16 v 13,21 / 6,15 v 3,8 / 7,17 v 14,18", "1,4 v 5,18 / 7,12 v 2,9 / 6,19 v 20,21"], // [21-23]
-    22: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "20,21 v 2,22 / 13,14 v 15,16 / 17,18 v 1,19", "4,6 v 10,14 / 7,11 v 15,17 / 3,5 v 9,13", "8,12 v 1,20 / 16,18 v 3,21 / 19,22 v 4,5", "11,14 v 8,19 / 2,6 v 9,15 / 7,10 v 13,18", "16,17 v 4,20 / 1,21 v 5,10 / 12,22 v 3,6", "2,13 v 12,19 / 7,9 v 14,20 / 8,15 v 18,22", "3,10 v 15,19 / 11,16 v 1,6 / 17,21 v 8,9", "2,5 v 14,18 / 13,20 v 11,22 / 4,7 v 12,21", "8,16 v 2,10 / 1,17 v 14,22 / 6,19 v 18,20", "5,12 v 13,17 / 3,7 v 9,16 / 4,11 v 15,21", "6,8 v 13,21 / 10,20 v 5,15 / 1,18 v 4,9", "2,19 v 7,22 / 3,11 v 17,20 / 12,14 v 6,16", "9,21 v 16,19 / 1,13 v 7,15 / 5,18 v 2,11", "4,12 v 15,18 / 10,17 v 6,22 / 3,8 v 1,14", "5,20 v 7,16 / 2,3 v 12,17 / 11,13 v 10,19", "14,21 v 2,7 / 4,8 v 13,22 / 1,9 v 5,11", "12,18 v 8,10 / 17,19 v 4,14 / 6,15 v 3,20", "2,9 v 12,20 / 16,22 v 1,10 / 11,21 v 6,18", "14,15 v 9,22 / 5,7 v 8,17 / 3,13 v 4,16"], // [23-25]
-    23: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "21,22 v 1,23 / 13,14 v 15,16 / 17,18 v 19,20", "3,6 v 10,14 / 4,7 v 11,15 / 2,5 v 9,13", "8,12 v 17,21 / 16,19 v 2,22 / 18,20 v 3,23", "7,10 v 13,17 / 1,5 v 11,14 / 4,6 v 9,16", "12,19 v 5,23 / 15,20 v 2,21 / 8,18 v 4,22", "3,7 v 9,19 / 1,10 v 8,16 / 6,11 v 13,18", "4,21 v 5,10 / 12,14 v 20,22 / 15,17 v 6,23", "1,7 v 12,18 / 3,11 v 16,17 / 2,8 v 14,23", "9,20 v 1,6 / 13,19 v 8,21 / 15,22 v 3,5", "7,14 v 16,21 / 4,12 v 13,23 / 2,10 v 15,18", "11,19 v 10,22 / 5,20 v 7,16 / 9,17 v 4,14", "1,3 v 13,21 / 2,6 v 12,17 / 8,15 v 9,23", "7,22 v 6,13 / 11,20 v 4,8 / 18,19 v 5,14", "1,15 v 17,19 / 9,21 v 11,18 / 10,16 v 3,12", "2,4 v 7,23 / 8,20 v 3,13 / 14,22 v 1,9", "10,11 v 16,23 / 5,17 v 18,22 / 6,12 v 15,21", "3,19 v 8,14 / 1,20 v 12,13 / 2,7 v 11,17", "4,9 v 5,15 / 6,16 v 2,18 / 10,21 v 20,23", "3,14 v 18,21 / 7,19 v 12,15 / 1,22 v 8,11"], // [25, 26]
-    24: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "21,22 v 23,24 / 13,14 v 15,16 / 17,18 v 19,20", "2,6 v 10,14 / 3,7 v 11,15 / 1,5 v 9,13", "4,8 v 17,21 / 12,16 v 19,23 / 18,20 v 22,24", "3,5 v 10,18 / 1,6 v 11,16 / 2,7 v 9,17", "8,14 v 19,24 / 15,20 v 21,23 / 4,12 v 13,22", "1,7 v 10,19 / 2,5 v 11,20 / 3,6 v 9,21", "14,16 v 17,22 / 4,15 v 12,24 / 8,13 v 18,23", "2,19 v 13,21 / 3,20 v 12,14 / 1,8 v 15,22", "4,5 v 10,23 / 6,11 v 17,24 / 7,9 v 16,18", "14,21 v 11,18 / 1,3 v 17,23 / 8,20 v 10,16", "4,7 v 13,24 / 6,9 v 19,22 / 2,12 v 5,15", "1,18 v 12,21 / 3,16 v 2,24 / 10,17 v 13,15", "6,7 v 22,23 / 4,9 v 14,20 / 5,8 v 11,19", "15,18 v 4,6 / 16,17 v 5,21 / 1,10 v 9,24", "2,11 v 14,23 / 3,19 v 8,22 / 7,12 v 13,20", "9,15 v 8,23 / 1,14 v 5,7 / 4,11 v 16,19", "3,10 v 21,24 / 6,13 v 12,20 / 2,17 v 18,22", "1,4 v 16,23 / 5,11 v 10,22 / 9,14 v 18,19", "7,21 v 20,24 / 2,8 v 3,13 / 6,12 v 15,17"], // [27, 28]
-    25: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "21,22 v 23,24 / 13,14 v 15,16 / 17,18 v 19,20", "2,6 v 10,13 / 3,7 v 11,14 / 1,25 v 5,9", "4,8 v 17,21 / 12,15 v 18,22 / 16,19 v 23,25", "3,5 v 10,15 / 1,20 v 6,11 / 2,24 v 7,9", "8,14 v 19,22 / 12,16 v 17,24 / 4,13 v 18,23", "2,20 v 5,14 / 1,21 v 7,10 / 3,25 v 6,12", "4,15 v 19,24 / 8,9 v 16,18 / 11,13 v 17,22", "1,23 v 12,14 / 2,25 v 8,11 / 20,21 v 3,9", "5,13 v 19,21 / 6,7 v 15,17 / 4,10 v 16,22", "9,14 v 4,6 / 18,24 v 10,25 / 20,23 v 8,15", "2,3 v 17,23 / 7,12 v 13,20 / 1,11 v 5,16", "18,19 v 6,21 / 22,25 v 4,7 / 8,24 v 1,13", "2,12 v 16,21 / 9,15 v 11,23 / 10,14 v 17,20", "5,19 v 4,12 / 18,25 v 14,24 / 3,22 v 8,13", "1,6 v 9,22 / 2,7 v 10,19 / 11,15 v 21,25", "16,20 v 4,24 / 3,18 v 14,21 / 5,17 v 12,23", "9,13 v 17,19 / 2,22 v 5,20 / 6,8 v 10,23", "1,18 v 15,19 / 3,11 v 6,24 / 7,16 v 14,25", "5,7 v 11,18 / 4,21 v 9,23 / 8,12 v 10,20"], // [28-30]
-    26: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "17,18 v 19,20 / 21,22 v 23,24 / 13,14 v 15,16", "3,7 v 11,13 / 1,25 v 5,9 / 2,26 v 6,10", "4,14 v 17,21 / 8,15 v 18,22 / 12,16 v 19,23", "1,24 v 6,11 / 3,26 v 5,12 / 20,25 v 2,7", "8,14 v 19,24 / 9,13 v 4,18 / 10,15 v 17,23", "16,20 v 1,26 / 21,25 v 3,6 / 2,22 v 5,11", "4,12 v 15,24 / 8,10 v 13,20 / 7,9 v 14,23", "19,25 v 11,26 / 16,18 v 2,21 / 17,22 v 1,7", "3,8 v 9,16 / 4,5 v 10,19 / 6,12 v 13,17", "15,21 v 7,26 / 20,22 v 3,23 / 14,18 v 24,25", "4,11 v 8,23 / 1,13 v 19,21 / 2,9 v 17,24", "5,15 v 6,18 / 10,16 v 22,25 / 12,14 v 20,26", "4,7 v 16,17 / 9,19 v 6,22 / 1,3 v 10,14", "13,23 v 18,26 / 2,8 v 12,25 / 11,21 v 20,24", "5,16 v 13,24 / 3,15 v 2,19 / 7,10 v 12,18", "4,6 v 20,23 / 9,17 v 8,26 / 1,14 v 11,22", "7,16 v 6,19 / 5,25 v 3,17 / 9,15 v 20,21", "2,10 v 18,24 / 8,12 v 1,15 / 4,13 v 22,26", "11,23 v 16,25 / 6,14 v 9,20 / 5,8 v 10,21"], // [30-32]
-    27: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "17,18 v 19,20 / 21,22 v 23,24 / 13,14 v 15,16", "3,27 v 7,11 / 1,25 v 5,9 / 2,26 v 6,10", "4,13 v 17,21 / 8,14 v 18,22 / 12,15 v 19,23", "20,26 v 3,5 / 24,27 v 1,6 / 16,25 v 2,7", "11,13 v 18,23 / 4,9 v 14,19 / 8,10 v 15,17", "12,24 v 3,25 / 16,21 v 1,26 / 20,22 v 2,27", "6,9 v 13,20 / 7,10 v 14,23 / 4,5 v 11,15", "18,21 v 25,27 / 8,16 v 19,24 / 12,17 v 22,26", "1,7 v 15,20 / 2,5 v 12,13 / 3,6 v 14,17", "9,23 v 8,26 / 11,19 v 22,25 / 4,10 v 16,18", "5,27 v 16,17 / 3,21 v 9,15 / 2,24 v 11,14", "1,13 v 10,19 / 6,7 v 12,18 / 4,20 v 8,25", "22,23 v 3,16 / 24,26 v 15,18 / 21,27 v 12,14", "9,17 v 7,24 / 2,11 v 8,21 / 1,5 v 10,22", "4,6 v 23,25 / 13,19 v 26,27 / 12,20 v 9,16", "14,15 v 25,26 / 10,21 v 20,24 / 3,18 v 8,13", "4,7 v 22,27 / 1,11 v 17,23 / 2,6 v 5,19", "9,18 v 2,17 / 8,12 v 1,4 / 16,20 v 11,26", "13,15 v 6,22 / 14,21 v 5,24 / 3,10 v 19,25"] // [2, 32, 33]
+const BIN_ID = '69abd2cc43b1c97be9bcd6d4'; 
+const MASTER_KEY = '$2a$10$ZOziURIapXNjiUoRwcSS5uX1jzAcIX/8y4oAh0nh8ISg0AZx5IgF2';
+
+let state = { p: 14, courts: 1, done: [], names: {}, locked: true };
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const getTodayStr = () => { const d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); };
+
+function jumpToAdmin() {
+    const pw = prompt("管理者パスワードを入力してください");
+    if(pw === ADMIN_PW) window.location.search = `?d=${getTodayStr()}&mode=admin&pw=${pw}`;
+    else alert("パスワードが違います");
+}
+
+function copyHtmlLinkDirect() {
+    const rawUrl = `${window.location.origin}${window.location.pathname}?d=${getTodayStr()}`;
+    const htmlTag = `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
+    navigator.clipboard.writeText(htmlTag).then(() => alert("リンクをコピーしました！"));
+}
+
+async function saveToCloud() {
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('pw') !== ADMIN_PW) return alert("権限がありません");
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.innerText = "保存中...";
+    try {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY.trim() },
+            body: JSON.stringify(state)
+        });
+        alert("保存完了！");
+    } catch(e) { alert("失敗"); }
+    btn.disabled = false; btn.innerText = "💾 クラウドに保存して反映";
+}
+
+async function handoverAdmin() {
+    await saveToCloud();
+    const url = `${window.location.origin}${window.location.pathname}?d=${getTodayStr()}&mode=admin&pw=${ADMIN_PW}`;
+    navigator.clipboard.writeText(`管理者交代：\n${url}`);
+    alert("交代用リンクをコピーしました");
+}
+
+async function loadFromCloud() {
+    try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': MASTER_KEY.trim(), 'X-Bin-Meta': 'false' }
+        });
+        if(res.ok) {
+            const data = await res.json();
+            state.p = data.p || 14;
+            state.done = data.done || [];
+            state.names = data.names || {};
+            const params = new URLSearchParams(window.location.search);
+            // 管理者以外はコート数も同期する
+            if(params.get('mode') !== 'admin' || params.get('pw') !== ADMIN_PW) state.courts = data.courts || 1;
+        }
+    } catch(e) {}
+    renderNames(); render();
+}
+
+window.onload = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlDate = params.get('d');
+    const isAdmin = params.get('mode') === 'admin' && params.get('pw') === ADMIN_PW;
+
+    if (urlDate === getTodayStr()) {
+        document.getElementById('main-content').style.display = 'block';
+        if (isAdmin) {
+            state.locked = false;
+            document.getElementById('admin-tools').style.display = 'block';
+            document.getElementById('modeDisplay').innerText = "管理者モード";
+        } else {
+            document.getElementById('modeDisplay').innerText = "閲覧モード";
+            document.getElementById('miniLinkBtn').classList.add('visitor');
+            state.locked = true;
+        }
+        renderNames(); render();
+        loadFromCloud();
+    } else {
+        document.getElementById('setup-panel').style.display = 'block';
+    }
 };
 
-// 28-30人用（エクストラ枠）[仕様5]
-for(let i=28; i<=30; i++) { MASTER_MATCH_DATA[i] = MASTER_MATCH_DATA[26]; }
+function changeP(n) { if(!state.locked) { state.p = Math.max(4, Math.min(30, state.p + n)); renderNames(); render(); } }
+function changeC(n) { if(!state.locked) { state.courts = parseInt(n); render(); } }
 
-let currentState = { p: 12, c: 3, names: [], isAdmin: false };
-
-function init() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('admin')) {
-        document.getElementById('admin-panel').style.display = 'block';
-        currentState.isAdmin = true;
+function renderNames() {
+    const grid = document.getElementById('nameGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    for(let i=1; i<=state.p; i++) {
+        const input = document.createElement('input');
+        input.className = 'name-input';
+        input.value = state.names[i] || '';
+        input.disabled = state.locked;
+        input.oninput = (e) => { state.names[i] = e.target.value; render(); };
+        grid.appendChild(input);
     }
-    // クラウド保存・読み込みのシミュレーション
-    saveAndRender();
+    document.getElementById('pCount').innerText = state.p;
 }
 
-/** 認証・管理者モード解禁 [仕様2] */
-function unlockAdmin() {
-    const input = prompt("管理者パスワードを入力してください");
-    if (input === ADMIN_PASSWORD) {
-        document.getElementById('admin-panel').style.display = 'block';
-        currentState.isAdmin = true;
-        alert("管理者モード解除成功");
-    } else {
-        alert("パスワードが正しくありません");
-    }
-}
-
-/** メイン描画処理 [仕様4, 5] */
-function saveAndRender() {
-    const pCount = parseInt(document.getElementById('p-count').value);
-    const cCount = parseInt(document.getElementById('c-count').value);
-    const nameText = document.getElementById('name-list').value;
-    const names = nameText.split('\n').map(n => n.trim()).filter(n => n !== "");
+function render() {
+    const board = document.getElementById('matchBoard');
+    if(!board) return;
+    board.innerHTML = '';
     
-    const container = document.getElementById('display-area');
-    container.innerHTML = "";
-
-    const rounds = MASTER_MATCH_DATA[pCount] || [];
-    
-    // 一括表示 (10ラウンド程度) [仕様4]
-    rounds.forEach((roundText, idx) => {
-        const roundLabel = String.fromCharCode(65 + idx); // A, B, C... [仕様4]
-        const matches = roundText.split(' / ');
-        let activePlayers = [];
+    for(let i=0; i<12; i++) {
+        const div = document.createElement('div');
+        div.className = `round`;
+        const isDone = (state.done || []).includes(i);
+        div.style.opacity = isDone ? "0.4" : "1";
         
-        let html = `<div class="round-block">
-            <div class="round-title">【${roundLabel}】の段</div>
-            <div class="court-grid">`;
+        let label = ALPHABET[i] || (i+1);
+        let html = `<div style="display:flex; justify-content:space-between;"><b>試合 ${label}</b> <input type="checkbox" ${isDone?'checked':''} ${state.locked?'disabled':''} onchange="toggle(${i})"></div>`;
         
-        matches.forEach((m, mIdx) => {
-            if (mIdx < cCount) {
-                // 名前への置換ロジック [仕様5]
-                const namedMatch = m.replace(/\b(\d+)\b/g, (num) => {
-                    const n = parseInt(num);
-                    activePlayers.push(n);
-                    return names[n-1] ? names[n-1] : num;
-                });
-                html += `<div class="court court-${mIdx+1}">${mIdx+1}面: ${namedMatch}</div>`;
-            }
-        });
+        let playingIds = [];
+        for(let c=0; c<state.courts; c++) {
+            let offset = (i * 2) + (c * 4);
+            let p1 = (offset % state.p) + 1;
+            let p2 = ((offset + 1) % state.p) + 1;
+            let p3 = ((offset + 2) % state.p) + 1;
+            let p4 = ((offset + 3) % state.p) + 1;
+            playingIds.push(p1, p2, p3, p4);
+            
+            const n = state.names || {};
+            html += `<div class="court court-${c+1}">${n[p1]||p1}・${n[p2]||p2} <small>vs</small> ${n[p3]||p3}・${n[p4]||p4}</div>`;
+        }
 
-        // 休憩者の自動算出 [仕様4, 8]
-        let resting = [];
-        for (let i = 1; i <= pCount; i++) {
-            if (!activePlayers.includes(i)) {
-                resting.push(names[i-1] ? names[i-1] : i);
+        let restingNames = [];
+        for(let j=1; j<=state.p; j++) {
+            if(!playingIds.includes(j)) {
+                restingNames.push(state.names[j] || j);
             }
         }
-        
-        html += `</div><div class="waiting">休憩者 (Wait): ${resting.join(', ')}</div></div>`;
-        container.innerHTML += html;
-    });
+        if(restingNames.length > 0) {
+            html += `<div class="rest-area">☕ 休み: ${restingNames.join('・')}</div>`;
+        }
+
+        div.innerHTML = html;
+        board.appendChild(div);
+    }
 }
 
-/** 共有リンク機能 [仕様2] */
-function copyViewerURL() {
-    const url = window.location.origin + window.location.pathname;
-    navigator.clipboard.writeText(url).then(() => alert("閲覧用リンクをコピーしました"));
+function toggle(i) {
+    if(state.locked) return;
+    if(!state.done) state.done = [];
+    if(state.done.includes(i)) state.done = state.done.filter(x => x !== i);
+    else state.done.push(i);
+    render();
 }
-
-/** 管理者引き継ぎ機能 [仕様3] */
-function transferAdmin() {
-    saveAndRender();
-    const adminUrl = window.location.origin + window.location.pathname + "?admin=true";
-    navigator.clipboard.writeText(adminUrl).then(() => alert("管理用URLをコピーしました。次の担当者に渡してください。"));
-}
-
-window.onload = init;
 </script>
 </body>
 </html>
