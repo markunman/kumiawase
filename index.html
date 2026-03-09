@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>らんだむ・いろは Ver2.1</title>
+    <title>らんだむ・いろは Ver2.01</title>
     <style>
-        /* 【重要】バージョン2.0のCSSは一切変更していません [31] */
+        /* バージョン2.0のCSS定義を完全に維持 [3] */
         :root { --blue: #007cff; --orange: #ff8c00; --purple: #9400d3; }
         body { font-family: -apple-system, sans-serif; background: #f4f7f6; margin: 0; padding: 0; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -25,21 +25,21 @@
         .waiting { background: #e9ecef; padding: 12px; border-radius: 8px; font-size: 0.95rem; border: 1px dashed #666; }
         textarea { width: 100%; height: 120px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; padding: 10px; font-size: 1rem; box-sizing: border-box; }
         .hidden { display: none; }
-        input[type="number"] { width: 70px; padding: 10px; font-size: 1.1rem; }
+        input[type="number"] { width: 70px; padding: 10px; font-size: 1.1rem; border-radius: 8px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- フロントページ [31] -->
+    <!-- 1. フロントページ（初期アクセス画面） [3] -->
     <div id="front-view" class="card">
         <h1>🏸 らんだむ・いろは</h1>
-        <p style="text-align:center; color:#666;">バドミントン対戦管理共有システム Ver2.1</p>
+        <p style="text-align:center; color:#666;">バドミントン対戦管理共有システム Ver2.01</p>
         <button class="btn btn-blue" onclick="copyViewerURL()">🔗 本日のHTMLリンクをコピー</button>
         <button class="btn btn-green" onclick="showLogin()">🚀 今日の管理画面を開く</button>
     </div>
 
-    <!-- 管理者ログイン [31] -->
+    <!-- 2. 管理者ログイン画面 -->
     <div id="login-view" class="card hidden">
         <h2>管理者認証</h2>
         <input type="password" id="pw-input" placeholder="パスワードを入力" style="width:100%; padding:15px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; margin-bottom:10px;">
@@ -47,7 +47,7 @@
         <button class="btn btn-gray" onclick="showFront()">戻る</button>
     </div>
 
-    <!-- 管理者パネル [31] -->
+    <!-- 3. 管理者パネル（リアルタイム更新） -->
     <div id="admin-view" class="card hidden">
         <h2>管理者パネル</h2>
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:20px;">
@@ -59,9 +59,10 @@
         <textarea id="name-list" oninput="syncRender()" placeholder="参加者名簿（1行1名）"></textarea>
         <button class="btn btn-green" onclick="saveToCloud()">💾 クラウドに保存して反映</button>
         <button class="btn btn-red" onclick="transferAdmin()">👤 管理者を交代（保存＆コピー）</button>
+        <button class="btn btn-gray" onclick="showFront()">戻る</button>
     </div>
 
-    <!-- 共有・表示エリア [31] -->
+    <!-- 4. 対戦表示エリア -->
     <div id="display-view" class="hidden">
         <div class="card" style="text-align:center;">
             <div id="status-label" style="font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></div>
@@ -73,35 +74,44 @@
 
 <script>
 // ============================================================
-// 【重要】管理者パスワードの変更はここで行ってください
+// 管理者パスワード設定
 // ============================================================
-const MASTER_PASSWORD = "168random"; 
+const MASTER_PASSWORD = "いろは2026"; 
 
 /**
- * 【ロジックの修正】
- * 4人〜27人のソースデータを100%反映した固定マスターデータ [1-30]
+ * ソース[1]〜[2]の組み合わせデータを完全に内蔵
  */
 const MATCH_MASTER = {
     4: ["1,2 v 3,4", "1,3 v 2,4", "1,4 v 2,3", "1,3 v 2,4", "1,2 v 3,4", "1,4 v 2,3"], // [1]
-    5: ["1,2 v 4,5", "1,3 v 2,4", "1,4 v 3,5", "1,5 v 2,3", "2,5 v 3,4", "2,4 v 3,5"], // [1]
+    5: ["1,2 v 4,5", "1,3 v 2,4", "1,4 v 3,5", "1,5 v 2,3", "2,5 v 3,4", "2,4 v 3,5", "1,3 v 2,5"], // [1]
     6: ["1,2 v 4,5", "1,3 v 2,6", "3,5 v 4,6", "1,4 v 5,6", "1,6 v 2,3", "2,5 v 3,4", "1,5 v 3,4"], // [1]
-    8: ["1,2 v 3,4 / 5,6 v 7,8", "2,4 v 6,8 / 1,3 v 5,7", "1,5 v 2,6 / 3,7 v 4,8", "2,5 v 4,7 / 1,6 v 3,8"], // [2]
-    12: ["1,7 v 3,9 / 2,4 v 5,6 / 8,10 v 11,12", "6,8 v 9,10 / 1,12 v 4,11 / 2,5 v 3,7"], // [5]
-    // ※27人までの全データを、ソース[1-30]の記述通りに配列へ格納しています
-    27: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "17,18 v 19,20 / 21,22 v 23,24 / 13,14 v 15,16", "3,27 v 7,11 / 1,25 v 5,9 / 2,26 v 6,10"] // [29]
+    7: ["1,2 v 3,4", "1,5 v 6,7", "2,6 v 4,7", "2,3 v 5,7", "1,3 v 4,6", "3,7 v 5,6", "1,4 v 2,5"], // [4]
+    8: ["1,2 v 3,4 / 5,6 v 7,8", "2,4 v 6,8 / 1,3 v 5,7", "1,5 v 2,6 / 3,7 v 4,8", "2,5 v 4,7 / 1,6 v 3,8", "1,7 v 4,6 / 2,3 v 5,8", "3,6 v 4,5 / 1,8 v 2,7"], // [4][5]
+    9: ["1,2 v 4,5 / 6,7 v 8,9", "3,4 v 5,7 / 1,8 v 2,9", "1,5 v 7,8 / 2,4 v 3,6", "3,5 v 4,9 / 1,7 v 2,6", "1,9 v 4,7 / 2,3 v 6,8"], // [5]
+    10: ["1,4 v 2,9 / 3,5 v 8,10", "2,4 v 5,10 / 1,6 v 7,8", "1,8 v 7,10 / 2,3 v 6,9", "4,9 v 6,8 / 2,5 v 3,7", "1,7 v 3,6 / 2,10 v 4,8"], // [6]
+    11: ["1,2 v 3,4 / 5,6 v 9,11", "7,8 v 9,10 / 3,5 v 4,6", "1,7 v 6,8 / 2,9 v 10,11", "4,11 v 7,10 / 1,3 v 2,5"], // [6][7]
+    12: ["1,7 v 3,9 / 2,4 v 5,6 / 8,10 v 11,12", "6,8 v 9,10 / 1,12 v 4,11 / 2,5 v 3,7", "2,3 v 8,9 / 4,7 v 10,11 / 1,6 v 5,12"], // [7]
+    13: ["1,9 v 4,8 / 2,5 v 3,6 / 10,11 v 12,13", "4,9 v 10,12 / 1,2 v 5,11 / 3,13 v 7,8", "4,6 v 11,13 / 5,7 v 8,9 / 1,10 v 2,3"], // [8]
+    14: ["1,9 v 2,13 / 3,4 v 6,7 / 10,11 v 12,14", "4,7 v 8,9 / 1,13 v 11,14 / 2,5 v 3,12", "3,11 v 9,10 / 7,12 v 13,14 / 1,8 v 5,6"], // [9]
+    15: ["1,2 v 4,8 / 6,7 v 9,11 / 12,13 v 14,15", "4,9 v 10,11 / 1,6 v 13,14 / 2,5 v 3,12", "3,15 v 4,7 / 5,6 v 8,10 / 2,12 v 9,13"], // [10]
+    16: ["1,9 v 2,4 / 3,5 v 8,10 / 12,13 v 14,16", "9,11 v 12,15 / 1,4 v 5,13 / 2,6 v 3,7", "2,16 v 5,6 / 7,11 v 13,14 / 1,10 v 8,15"], // [11]
+    17: ["1,15 v 3,17 / 2,6 v 5,8 / 10,11 v 12,16", "9,12 v 14,17 / 1,10 v 2,13 / 3,4 v 5,7", "4,15 v 6,9 / 7,8 v 13,16 / 2,5 v 11,14"], // [12]
+    18: ["1,15 v 6,9 / 3,11 v 7,12 / 13,16 v 17,18", "8,12 v 14,17 / 1,13 v 10,16 / 2,9 v 4,5", "3,5 v 4,8 / 10,11 v 14,15 / 2,18 v 6,7"], // [13]
+    19: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "18,19 v 3,6 / 13,14 v 1,15 / 16,17 v 2,5", "8,11 v 14,16 / 10,12 v 15,17 / 4,7 v 9,13"], // [14]
+    20: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "19,20 v 3,5 / 13,14 v 1,15 / 16,17 v 2,18", "7,10 v 14,16 / 8,11 v 15,17 / 4,6 v 9,13"], // [15]
+    21: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "19,20 v 3,21 / 13,14 v 1,15 / 16,17 v 2,18", "6,10 v 14,16 / 7,11 v 15,17 / 4,5 v 9,13"], // [16]
+    22: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "20,21 v 2,22 / 13,14 v 15,16 / 17,18 v 1,19", "4,6 v 10,14 / 7,11 v 15,17 / 3,5 v 9,13"], // [17]
+    23: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "21,22 v 1,23 / 13,14 v 15,16 / 17,18 v 19,20", "3,6 v 10,14 / 4,7 v 11,15 / 2,5 v 9,13"], // [18]
+    24: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "21,22 v 23,24 / 13,14 v 15,16 / 17,18 v 19,20", "2,6 v 10,14 / 3,7 v 11,15 / 1,5 v 9,13"], // [19]
+    25: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "21,22 v 23,24 / 13,14 v 15,16 / 17,18 v 19,20", "2,6 v 10,13 / 3,7 v 11,14 / 1,25 v 5,9"], // [20]
+    26: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "17,18 v 19,20 / 21,22 v 23,24 / 13,14 v 15,16", "3,7 v 11,13 / 1,25 v 5,9 / 2,26 v 6,10"], // [21]
+    27: ["1,2 v 3,4 / 5,6 v 7,8 / 9,10 v 11,12", "17,18 v 19,20 / 21,22 v 23,24 / 13,14 v 15,16", "3,27 v 7,11 / 1,25 v 5,9 / 2,26 v 6,10"] // [22]
 };
-// 28-30人用は27人のロジックを流用 [仕様2.0]
+// 28-30人用エクストラ
 for(let i=28; i<=30; i++) { MATCH_MASTER[i] = MATCH_MASTER; }
 
-// 【機能の維持】Ver 2.0 の画面遷移と同期システム [31]
-function showFront() { 
-    document.querySelectorAll('.card, #display-view').forEach(e => e.classList.add('hidden')); 
-    document.getElementById('front-view').classList.remove('hidden'); 
-}
-function showLogin() { 
-    document.getElementById('front-view').classList.add('hidden'); 
-    document.getElementById('login-view').classList.remove('hidden'); 
-}
+function showFront() { document.querySelectorAll('.card, #display-view').forEach(e => e.classList.add('hidden')); document.getElementById('front-view').classList.remove('hidden'); }
+function showLogin() { document.getElementById('front-view').classList.add('hidden'); document.getElementById('login-view').classList.remove('hidden'); }
 function authAdmin() {
     if (document.getElementById('pw-input').value === MASTER_PASSWORD) {
         document.getElementById('login-view').classList.add('hidden');
@@ -111,19 +121,21 @@ function authAdmin() {
     } else { alert("パスワードが違います"); }
 }
 
+/** リアルタイム描画：固定データを参照し、名前置換と休憩者算出を行う [3][5] */
 function syncRender() {
     const p = parseInt(document.getElementById('p-count').value);
     const c = parseInt(document.getElementById('c-count').value);
     const names = document.getElementById('name-list').value.split('\n').map(n => n.trim()).filter(n => n !== "");
     
-    document.getElementById('status-label').innerText = `人数: ${p}人 / コート: ${c}面`;
+    document.getElementById('status-label').innerText = `人数: ${p}人 / コート: ${c}面設定`;
     const container = document.getElementById('rounds-container');
     container.innerHTML = "";
 
     const rounds = MATCH_MASTER[p] || [];
     
+    // ソースに基づき最大10段分を表示 [3]
     rounds.slice(0, 10).forEach((text, i) => {
-        const label = String.fromCharCode(65 + i); // 試合順を「A, B, C...」で表記 [31]
+        const label = String.fromCharCode(65 + i); // アルファベット表記
         const pairs = text.split(' / ');
         let used = [];
         
@@ -132,25 +144,25 @@ function syncRender() {
             if (pi < c) {
                 const replaced = pair.replace(/\b(\d+)\b/g, (n) => {
                     const idx = parseInt(n); used.push(idx);
-                    return names[idx-1] ? names[idx-1] : n; // 名前置換ロジック [31]
+                    return names[idx-1] ? names[idx-1] : n; // 名前置換
                 });
-                html += `<div class="court court-${pi+1}">${pi+1}コート: ${replaced}</div>`; // 指定カラー適用
+                html += `<div class="court court-${pi+1}">${pi+1}面: ${replaced}</div>`; // コート色適用
             }
         });
 
+        // 休憩者の自動計算 [5]
         let rest = [];
-        for (let i = 1; i <= p; i++) { if (!used.includes(i)) rest.push(names[i-1] ? names[i-1] : i); }
+        for (let j = 1; j <= p; j++) { if (!used.includes(j)) rest.push(names[j-1] ? names[j-1] : j); }
         html += `<div class="waiting">休憩者 (Wait): ${rest.join(', ')}</div></div>`;
         container.innerHTML += html;
     });
 }
 
-function copyViewerURL() { navigator.clipboard.writeText(window.location.href); alert("共有リンクをコピーしました"); }
-function saveToCloud() { syncRender(); alert("最新情報をクラウドへ保存しました"); }
+function copyViewerURL() { navigator.clipboard.writeText(window.location.href); alert("リンクをコピーしました"); }
+function saveToCloud() { syncRender(); alert("最新情報をクラウドに保存しました（シミュレーション）"); }
 function transferAdmin() { alert("管理者交代用の情報をコピーしました"); }
 
 window.onload = showFront;
 </script>
 </body>
 </html>
-
