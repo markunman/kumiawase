@@ -169,7 +169,7 @@ function checkPw() {
 
 function copyHtmlLinkDirect() {
     const rawUrl = `${window.location.origin}${window.location.pathname}?d=${getTodayStr()}`;
-    const htmlTag = `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer" style="font-size:24px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
+    const htmlTag = `<a href="${rawUrl}" target="_blank" rel="noopener noreferrer" style="font-size:18px; font-weight:bold; color:#1a73e8; text-decoration:none; border-bottom:2px solid #1a73e8;">👉 本日のゲーム練習組み合わせ</a>`;
     navigator.clipboard.writeText(htmlTag).then(() => alert("リンクをコピーしました！"));
 }
 
